@@ -1,0 +1,26 @@
+
+姿态数据：
+float Roll,Pitch,Yaw;    //姿态角
+单位：
+定义：imu.c
+引用：imu.h
+
+角速度信息、加速度信息：
+单位：
+mpu6050.Gyro_deg.x, 
+mpu6050.Gyro_deg.y, 
+mpu6050.Gyro_deg.z, 
+mpu6050.Acc.x, 
+mpu6050.Acc.y, 
+mpu6050.Acc.z,
+定义：mpu6050.c     MPU6050_STRUCT mpu6050;
+引用：mpu6050.h
+
+mpu6050原数据：共14字节
+加速度 3轴*2字节
+角速度 3轴*2字节
+温度   2字节
+定义：u8 mpu6050_buffer[14];
+引用：无
+调用：MPU6050_Data_Prepare()
+
