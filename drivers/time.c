@@ -153,8 +153,8 @@ void sys_time()
 	}
 }
 
-volatile float Cycle_T[GET_TIME_NUM][3];
-
+volatile float Cycle_T[GET_TIME_NUM][3];	//时间记录数组，记录old、now、new
+											//上次时间、本次时间、时间间隔
 enum
 {
 	NOW = 0,
