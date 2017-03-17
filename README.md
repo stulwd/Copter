@@ -1,20 +1,19 @@
-# ÎÒµÄCopterÏîÄ¿
+# æˆ‘çš„Copteré¡¹ç›®
 
-ÕâÊÇÏîÄ¿ [Copter](https://github.com/shuanglengyunji/Copter) £¬
-»¶Ó­·ÃÎÊ¡£
+è¿™æ˜¯é¡¹ç›® [Copter](https://github.com/shuanglengyunji/Copter) ï¼Œ
+æ¬¢è¿è®¿é—®ã€‚
 
-Õâ¸öÏîÄ¿µÄ°æ±¾¿âÊÇ **Git¸ñÊ½** £¬ÔÚ Windows¡¢Linux¡¢Mac OS X
-Æ½Ì¨¶¼ÓĞ¿Í»§¶Ë¹¤¾ß¿ÉÒÔ·ÃÎÊ¡£ËäÈ»°æ±¾¿âÖ»Ìá¹©GitÒ»ÖÖ¸ñÊ½£¬
-µ«ÊÇÄã»¹ÊÇ¿ÉÒÔÓÃÆäËûÓÃÆäËû¹¤¾ß·ÃÎÊ£¬Èç ``svn`` ºÍ ``hg`` ¡£
+è¿™ä¸ªé¡¹ç›®çš„ç‰ˆæœ¬åº“æ˜¯ **Gitæ ¼å¼** ï¼Œåœ¨ Windowsã€Linuxã€Mac OS X
+å¹³å°éƒ½æœ‰å®¢æˆ·ç«¯å·¥å…·å¯ä»¥è®¿é—®ã€‚è™½ç„¶ç‰ˆæœ¬åº“åªæä¾›Gitä¸€ç§æ ¼å¼ï¼Œ
+ä½†æ˜¯ä½ è¿˜æ˜¯å¯ä»¥ç”¨å…¶ä»–ç”¨å…¶ä»–å·¥å…·è®¿é—®ï¼Œå¦‚ ``svn`` å’Œ ``hg`` ã€‚
 
-## °æ±¾¿âµØÖ·
+## ç‰ˆæœ¬åº“åœ°å€
 
-Ö§³ÖÈıÖÖ·ÃÎÊĞ­Òé£º
+æ”¯æŒä¸‰ç§è®¿é—®åè®®ï¼š
 
-* GitĞ­Òé: `git@github.com:shuanglengyunji/Copter.git` ¡£
+* Gitåè®®: `git@github.com:shuanglengyunji/Copter.git` ã€‚
 
-## ¿ËÂ¡°æ±¾¿â
+## å…‹éš†ç‰ˆæœ¬åº“
 
-²Ù×÷Ê¾Àı£º
-
+æ“ä½œç¤ºä¾‹ï¼š
     $ git clone git@github.com:shuanglengyunji/Copter.git
