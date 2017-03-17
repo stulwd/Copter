@@ -18,7 +18,7 @@ typedef struct
 	char Acc_CALIBRATE;
 	char Gyro_CALIBRATE;
 	char Cali_3d;
-  xyz_s16_t Acc_I16;
+	xyz_s16_t Acc_I16;
 	xyz_s16_t Gyro_I16;
 
 	xyz_f_t Acc;

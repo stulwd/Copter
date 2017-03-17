@@ -18,7 +18,7 @@ u8 mpu6050_ok;
 void MPU6050_Read(void)
 {
     I2C_FastMode = 1;
-    IIC_Read_nByte(MPU6050_ADDR,MPU6050_RA_ACCEL_XOUT_H,14,mpu6050_buffer);
+    IIC_Read_nByte(MPU6050_ADDR,MPU6050_RA_ACCEL_XOUT_H,14,mpu6050_buffer);	//IIC连读模式，讲数据存入 mpu6050_buffer
 }
 
 

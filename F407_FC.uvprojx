@@ -862,6 +862,16 @@
               <FileType>5</FileType>
               <FilePath>.\doc\record.txt</FilePath>
             </File>
+            <File>
+              <FileName>修改文档.txt</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\doc\修改文档.txt</FilePath>
+            </File>
+            <File>
+              <FileName>资料整理.txt</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\doc\资料整理.txt</FilePath>
+            </File>
           </Files>
         </Group>
       </Groups>

@@ -72,9 +72,9 @@ void Duty_2ms()
 	
 	//mpu6050处理
 	MPU6050_Read(); 									//读取mpu6轴传感器
-	MPU6050_Data_Prepare( inner_loop_time );			//mpu6轴传感器数据处理test[5]数组
-														//校准、滤波、坐标转换
-	
+	MPU6050_Data_Prepare( inner_loop_time );			//mpu6轴传感器数据处理   校准、滤波、坐标转换
+														
+	//姿态解算（使用MPU6050数据进行姿态解算）
 	/*IMU更新姿态。输入：半个执行周期，三轴陀螺仪数据（转换到度每秒），三轴加速度计数据（4096--1G）；输出：ROLPITYAW姿态角*/
  	IMUupdate(0.5f *inner_loop_time,mpu6050.Gyro_deg.x, mpu6050.Gyro_deg.y, mpu6050.Gyro_deg.z, mpu6050.Acc.x, mpu6050.Acc.y, mpu6050.Acc.z,&Roll,&Pitch,&Yaw);
 
