@@ -1,3 +1,9 @@
 rc.c
 1.认为 rc_lose 是以前的遗留代码，所以注释掉 rc_lose 相关代码
 2.注释掉 if( MAX_CH[i] > MIN_CH[i] ) 判断代码，这段代码的功能没有实现，没有用处
+3.恢复 NS 相关判断，NS 的作用有两个 1.选择数据来源 2.遥控信号看门狗
+4.注释掉与此三个变量相关的代码，此部分代码为无用代码（已经废除，似乎在很早之前的版本里看到过这段代码起作用）
+//float CH_Old[CH_NUM];
+//float CH_filter_Old[CH_NUM];
+//float CH_filter_D[CH_NUM];
+5.注释掉八字解锁相关代码

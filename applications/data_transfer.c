@@ -379,7 +379,7 @@ void ANO_DT_Data_Receive_Anl(u8 *data_buf,u8 num)
 	{
 		if( NS != 1 )
 		{
-			Feed_Rc_Dog(2);
+			Feed_Rc_Dog(2);	//数传
 		}
 
 		RX_CH[THR] = (vs16)(*(data_buf+4)<<8)|*(data_buf+5) ;
