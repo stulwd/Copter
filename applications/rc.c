@@ -90,12 +90,15 @@ void RC_Duty( float T , u16 tmp16_CH[CH_NUM] )
 			}
 			else
 			{
-				//CH_Max_Min_Record();
+				
+				//数据拷贝进 CH_TMP[i]
 				CH_TMP[i] = ( Mapped_CH[i] ); //映射拷贝数据，大约 1000~2000
 				
-				if( MAX_CH[i] > MIN_CH[i] )
-				{
-					if( !CH_DIR[i] )
+				//此后使用 CH_TMP[i] 作为遥控器单通道数据
+				
+//				if( MAX_CH[i] > MIN_CH[i] )	//这些数据是在数组中预先设定的，没有对应的遥控器适配代码，或者说是个预留功能
+//				{
+					if( !CH_DIR[i] )	//摇杆方向选择，用于适配遥控器各通道摇杆数值的正反
 					{
 						CH[i] =   LIMIT ( (s16)( ( CH_TMP[i] - MIN_CH[i] )/(float)( MAX_CH[i] - MIN_CH[i] ) *1000 - CH_OFFSET ), -500, 500); //归一化，输出+-500
 					}
@@ -103,11 +106,11 @@ void RC_Duty( float T , u16 tmp16_CH[CH_NUM] )
 					{
 						CH[i] = - LIMIT ( (s16)( ( CH_TMP[i] - MIN_CH[i] )/(float)( MAX_CH[i] - MIN_CH[i] ) *1000 - CH_OFFSET ), -500, 500); //归一化，输出+-500
 					}
-				}	
-				else
-				{
-					fly_ready = 0;
-				}
+//				}	
+//				else
+//				{
+//					fly_ready = 0;
+//				}
 			}
 //			rc_lose = 0;
 //		}	
@@ -120,29 +123,30 @@ void RC_Duty( float T , u16 tmp16_CH[CH_NUM] )
 //=================== filter ===================================
 //  全局输出，CH_filter[],0横滚，1俯仰，2油门，3航向 范围：+-500	
 //=================== filter =================================== 		
-			
-			filter_A = 6.28f *10 *T;
-			
-			if( ABS(CH_TMP[i] - CH_filter[i]) <100 )
+		
+		//单通道数据滤波
+		filter_A = 6.28f *10 *T;
+		
+		if( ABS(CH_TMP[i] - CH_filter[i]) <100 )
+		{
+			CH_filter[i] += filter_A *(CH[i] - CH_filter[i]) ;
+		}
+		else
+		{
+			CH_filter[i] += 0.5f *filter_A *( CH[i] - CH_filter[i]) ;
+		}
+		
+		if(NS == 0) //无信号
+		{
+			if(!fly_ready)
 			{
-				CH_filter[i] += filter_A *(CH[i] - CH_filter[i]) ;
+				CH_filter[THR] = -500;
 			}
-			else
-			{
-				CH_filter[i] += 0.5f *filter_A *( CH[i] - CH_filter[i]) ;
-			}
-			
-			if(NS == 0) //无信号
-			{
-				if(!fly_ready)
-				{
-					CH_filter[THR] = -500;
-				}
-			}
+		}
 // 					CH_filter[i] = Fli_Tmp;
-			CH_filter_D[i] 	= ( CH_filter[i] - CH_filter_Old[i] );
-			CH_filter_Old[i] = CH_filter[i];
-			CH_Old[i] 		= CH[i];
+		CH_filter_D[i] 	= ( CH_filter[i] - CH_filter_Old[i] );
+		CH_filter_Old[i] = CH_filter[i];
+		CH_Old[i] 		= CH[i];
 	}
 	//======================================================================
 	Fly_Ready(T,wz_speed);		//解锁判断
