@@ -5,13 +5,10 @@
 
 #include "include.h"
 
-#define GYRO_DEATH_ZOOM 20   //  20 / 65536
+#define GYRO_DEATH_ZOOM 	20   //  20 / 65536
 
-#define OFFSET_AV_NUM 50
-#define FILTER_NUM 10
-
-
-
+#define OFFSET_AV_NUM 		50
+#define FILTER_NUM 			10
 
 typedef struct 
 {

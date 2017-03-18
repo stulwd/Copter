@@ -6,4 +6,7 @@ rc.c
 //float CH_Old[CH_NUM];
 //float CH_filter_Old[CH_NUM];
 //float CH_filter_D[CH_NUM];
-5.注释掉八字解锁相关代码
+5.删除八字解锁相关代码
+
+mpu6050.c
+1.注释掉 filter_cnt_old 相关赋值
