@@ -32,9 +32,11 @@ s16 CH[CH_NUM];
 //float CH_Old[CH_NUM];
 //float CH_filter_Old[CH_NUM];
 //float CH_filter_D[CH_NUM];
+
 float CH_filter[CH_NUM];
-u8 NS,CH_Error[CH_NUM];
-u16 NS_cnt,CLR_CH_Error[CH_NUM];
+
+u8 NS;
+u8 CH_Error[CH_NUM];u16 NS_cnt,CLR_CH_Error[CH_NUM];
  
 s16 MAX_CH[CH_NUM]  = {1900 ,1900 ,1900 ,1900 ,1900 ,1900 ,1900 ,1900 };	//摇杆最大
 s16 MIN_CH[CH_NUM]  = {1100 ,1100 ,1100 ,1100 ,1100 ,1100 ,1100 ,1100 };	//摇杆最小
@@ -186,47 +188,30 @@ s16 locked_cnt;
 extern u8 acc_ng_cali;
 void Fly_Ready(float T,float height_speed_mm)
 {
-	if( CH_filter[2] < -400 )  							//油门小于10%
+	//对不同摇杆状态持续时间进行计数
+	if( CH_filter[2] < -400 )  				//下满足（油门小于10%）
 	{
-		thr_stick_low = 1;
-		if( fly_ready && ready_cnt != -1 ) //解锁完成，且已退出解锁上锁过程
+		thr_stick_low = 1;					//油门低标志置1
+		if( fly_ready && ready_cnt != -1 )	//解锁完成，且已退出解锁上锁过程
 		{
 			//ready_cnt += 1000 *T;
 		}
-//#if(USE_TOE_IN_UNLOCK)		
-//		if( CH_filter[3] < -400 )							
-//		{
-//			if( CH_filter[1] > 400 )
-//			{
-//				if( CH_filter[0] > 400 )
-//				{
-//					if( ready_cnt != -1 )				   //外八满足且退出解锁上锁过程
-//					{
-//						ready_cnt += 3 *1000 *T;
-//					}
-//				}
-
-//			}
-
-//		}
-//#else
-		if( CH_filter[3] < -400 )					      //左下满足		
+		
+		if( CH_filter[3] < -400 )				//左下满足		
 		{
 			if( ready_cnt != -1 && fly_ready )	//判断已经退出解锁上锁过程且已经解锁
 			{
 				ready_cnt += 1000 *T;
 			}
-
 		}
-		else if( CH_filter[3] > 400 )      			//右下满足
+		else if( CH_filter[3] > 400 )      		//右下满足
 		{
 			if( ready_cnt != -1 && !fly_ready )	//判断已经退出解锁上锁过程且已经上锁
 			{
 				ready_cnt += 1000 *T;
 			}
 		}
-//#endif		
-		else if( ready_cnt == -1 )					//4通道(CH[3])回位
+		else if( ready_cnt == -1 )				//4通道(CH[3])回位
 		{
 			ready_cnt=0;
 		}
@@ -234,18 +219,20 @@ void Fly_Ready(float T,float height_speed_mm)
 	else
 	{
 		ready_cnt=0;
-		thr_stick_low = 0;
+		thr_stick_low = 0;	//油门低标志置0
 	}
 
-	
+	//对计数结果进行判断
 	if( ready_cnt > 300 ) // 600ms 
 	{
+		//满足解锁/上锁条件
+		
 		ready_cnt = -1;
-		//fly_ready = ( fly_ready==1 ) ? 0 : 1 ;
+		
 		if( !fly_ready )
 		{
-			fly_ready = 1;
-			 acc_ng_cali = mpu6050.Gyro_CALIBRATE = 2;
+			fly_ready = 1;		//允许解锁
+			acc_ng_cali = mpu6050.Gyro_CALIBRATE = 2;	//这个在imu.c里面被调用
 		}
 		else
 		{
@@ -254,7 +241,7 @@ void Fly_Ready(float T,float height_speed_mm)
 		
 	}
 
-		//////
+	//左杆右上满足，进行一个和初始化相关的动作
 	if(CH_filter[2] < -400 && CH_filter[3] < -400 && (CH_filter[0]>400&&CH_filter[1]>400))
 	{
 		if(mag_cali_cnt<2000)
@@ -265,14 +252,15 @@ void Fly_Ready(float T,float height_speed_mm)
 		{
 			Mag_CALIBRATED = 1;
 		}
-	
 	}
 	else
 	{
 		mag_cali_cnt = 0;
 	}
 	
-	if(fly_ready && (thr_stick_low ==1) && (ABS(height_speed_mm)<300))
+	
+	//解锁后一定时间没有起飞（同时满足油门低和高度低），则上锁
+	if(fly_ready && (thr_stick_low == 1) && (ABS(height_speed_mm)<300))
 	{
 		if(locked_cnt < 2000)
 		{
@@ -282,7 +270,6 @@ void Fly_Ready(float T,float height_speed_mm)
 		{
 			fly_ready = 0;
 		}
-		
 	}
 	else
 	{
@@ -328,6 +315,25 @@ void Fly_Ready(float T,float height_speed_mm)
 ////		}
 ////	}
 //}
+
+//#if(USE_TOE_IN_UNLOCK)		
+//		if( CH_filter[3] < -400 )							
+//		{
+//			if( CH_filter[1] > 400 )
+//			{
+//				if( CH_filter[0] > 400 )
+//				{
+//					if( ready_cnt != -1 )				   //外八满足且退出解锁上锁过程
+//					{
+//						ready_cnt += 3 *1000 *T;
+//					}
+//				}
+
+//			}
+
+//		}
+//#else
+//#endif		
 
 /******************* (C) COPYRIGHT 2014 ANO TECH *****END OF FILE************/
 
