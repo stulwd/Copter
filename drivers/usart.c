@@ -92,7 +92,7 @@ void Usart2_IRQ(void)
 		com_data = USART2->DR;
 	}
 
-  //接收中断
+	//接收中断
 	if( USART_GetITStatus(USART2,USART_IT_RXNE) )
 	{
 		USART_ClearITPendingBit(USART2,USART_IT_RXNE);//清除中断标志
@@ -110,7 +110,6 @@ void Usart2_IRQ(void)
 			USART2->CR1 &= ~USART_CR1_TXEIE;		//关闭TXE（发送中断）中断
 		}
 
-
 		//USART_ClearITPendingBit(USART2,USART_IT_TXE);
 	}
 
@@ -120,7 +119,7 @@ void Usart2_IRQ(void)
 
 void Usart2_Send(unsigned char *DataToSend ,u8 data_num)
 {
-  u8 i;
+	u8 i;
 	for(i=0;i<data_num;i++)
 	{
 		TxBuffer[count++] = *(DataToSend+i);

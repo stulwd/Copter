@@ -50,6 +50,8 @@ void RC_Duty( float T , u16 tmp16_CH[CH_NUM] )
 	s16 CH_TMP[CH_NUM];
 	static u16 Mapped_CH[CH_NUM];
 
+	//按照 NS 的数值选择数据源
+	//把 tmp16_CH 或 RX_CH 中所有通道的数值放进 Mapped_CH 数组
 	if( NS == 1 )
 	{
 		CH_Mapping_Fun(tmp16_CH,Mapped_CH);
@@ -59,9 +61,12 @@ void RC_Duty( float T , u16 tmp16_CH[CH_NUM] )
 		CH_Mapping_Fun(RX_CH,Mapped_CH);
 	}
 
+	//数值被存入 Mapped_CH[]
 	
 	for( i = 0;i < CH_NUM ; i++ )
 	{
+		//如果数值超出合理范围，CH_Error[i]=1;
+		//如果恢复正常后持续一段时间 CLR_CH_Error[i] > 200
 		if( (u16)Mapped_CH[i] > 2500 || (u16)Mapped_CH[i] < 500 )
 		{
 			CH_Error[i]=1;
@@ -77,8 +82,8 @@ void RC_Duty( float T , u16 tmp16_CH[CH_NUM] )
 			}
 		}
 
-		if( NS == 1 || NS == 2 )
-		{
+//		if( NS == 1 || NS == 2 )	//信号都已经传入了，这一个判断没意义，应该是以前有用现在废弃的代码
+//		{
 			if( CH_Error[i] ) //单通道数据错误
 			{
 				
@@ -104,12 +109,14 @@ void RC_Duty( float T , u16 tmp16_CH[CH_NUM] )
 					fly_ready = 0;
 				}
 			}
-			rc_lose = 0;
-		}	
-		else //未接接收机或无信号（遥控关闭或丢失信号）
-		{
-			rc_lose = 1;
-		}
+//			rc_lose = 0;
+//		}	
+//		else //未接接收机或无信号（遥控关闭或丢失信号）
+//		{
+//			rc_lose = 1;
+//		}
+			
+			
 //=================== filter ===================================
 //  全局输出，CH_filter[],0横滚，1俯仰，2油门，3航向 范围：+-500	
 //=================== filter =================================== 		

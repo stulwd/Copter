@@ -24,7 +24,6 @@
 
 s16 loop_cnt;
 
-
 loop_t loop;
 
 void Loop_check()  //TIME INTTERRUPT
@@ -52,15 +51,15 @@ void Loop_check()  //TIME INTTERRUPT
 //						线程
 //********************************************************************************************************
 
+float test[5];
+
 //1ms线程
 void Duty_1ms()
 {
-	Get_Cycle_T(1)/1000000.0f;	//返回本次调用和上次调用的时间差，数据来自 GetSysTime_us()
+	test[4] = Get_Cycle_T(1)/1000000.0f;	//返回本次调用和上次调用的时间差，数据来自 GetSysTime_us()
 
 	ANO_DT_Data_Exchange();		//数传通信定时调用
 }
-
-float test[5];
 
 //2ms线程
 void Duty_2ms()
