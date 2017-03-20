@@ -415,6 +415,7 @@ void MPU6050_Data_Prepare(float T)
 //坐标转换
 	
     /*坐标转换*/
+	//把数组里的值存入 mpu6050.Acc 和 mpu6050.Gyro
     Transform(mpu_fil_tmp[A_X],mpu_fil_tmp[A_Y],mpu_fil_tmp[A_Z],&mpu6050.Acc.x,&mpu6050.Acc.y,&mpu6050.Acc.z);
     Transform(mpu_fil_tmp[G_X],mpu_fil_tmp[G_Y],mpu_fil_tmp[G_Z],&mpu6050.Gyro.x,&mpu6050.Gyro.y,&mpu6050.Gyro.z);
 

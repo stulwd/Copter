@@ -127,8 +127,8 @@ void simple_3d_trans(_xyz_f_t *ref, _xyz_f_t *in, _xyz_f_t *out) //小范围内�
 	
 	pn = ref->z < 0? -1 : 1;
 	
-	  out->x = ( h_tmp_x *in->x - pn *ref->x *in->z ) ;
-		out->y = ( pn *h_tmp_y *in->y - ref->y *in->z ) ;
+	out->x = ( h_tmp_x *in->x - pn *ref->x *in->z ) ;
+	out->y = ( pn *h_tmp_y *in->y - ref->y *in->z ) ;
 	
 // 	 out->x = h_tmp_x *in->x - ref->x *in->z;
 // 	 out->y = ref->z *in->y - ref->y *in->z;

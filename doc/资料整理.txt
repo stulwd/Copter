@@ -1,12 +1,21 @@
 
 姿态数据：
 float Roll,Pitch,Yaw;    //姿态角
-单位：
+单位：？？
 定义：imu.c
 引用：imu.h
 
+地磁计数据：
+ak8975_t ak8975 = { {0,0,0},{-1,-1,-1},{1,0.8538,0.9389},{0,0,0} };
+单位：？？
+ak8975.Mag_Val.x
+ak8975.Mag_Val.y
+ak8975.Mag_Val.z
+定义：ak8975.c
+引用：ak8975.h
+
 角速度信息、加速度信息：
-单位：
+单位：？？
 mpu6050.Gyro_deg.x, 
 mpu6050.Gyro_deg.y, 
 mpu6050.Gyro_deg.z, 

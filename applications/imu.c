@@ -41,9 +41,12 @@ void IMUupdate(float half_T,float gx, float gy, float gz, float ax, float ay, fl
 {		
 	float ref_err_lpf_hz;
 	static float yaw_correct;
-	float mag_norm_tmp;
-	static xyz_f_t mag_tmp;
+	float mag_norm_tmp;			//
+	static xyz_f_t mag_tmp;		//
 	static float yaw_mag;
+	
+	//norm 规范，标准
+	//mag 地磁计（magnetometer）
 	
 	mag_norm_tmp = 20 *(6.28f *half_T);	
 	
@@ -51,7 +54,7 @@ void IMUupdate(float half_T,float gx, float gy, float gz, float ax, float ay, fl
 	
 	if( mag_norm_xyz != 0)
 	{
-		mag_tmp.x += mag_norm_tmp *( (float)ak8975.Mag_Val.x /( mag_norm_xyz ) - mag_tmp.x);
+		mag_tmp.x += mag_norm_tmp *( (float)ak8975.Mag_Val.x /( mag_norm_xyz ) - mag_tmp.x);	//x轴方向与合力（磁感线方向，认为是由北指向南）的夹角
 		mag_tmp.y += mag_norm_tmp *( (float)ak8975.Mag_Val.y /( mag_norm_xyz ) - mag_tmp.y);	
 		mag_tmp.z += mag_norm_tmp *( (float)ak8975.Mag_Val.z /( mag_norm_xyz ) - mag_tmp.z);	
 	}
@@ -70,7 +73,6 @@ void IMUupdate(float half_T,float gx, float gy, float gz, float ax, float ay, fl
 	if( mag_sim_3d.x != 0 && mag_sim_3d.y != 0 && mag_sim_3d.z != 0 && mag_norm != 0)
 	{
 		yaw_mag = fast_atan2( ( mag_sim_3d.y/mag_norm ) , ( mag_sim_3d.x/mag_norm) ) *57.3f;
-		
 	}
 	//=============================================================================
 	// 计算等效重力向量
@@ -114,7 +116,6 @@ void IMUupdate(float half_T,float gx, float gy, float gz, float ax, float ay, fl
 	// 计算加速度向量的模
 	norm_acc = my_sqrt(ax*ax + ay*ay + az*az);   
 
-
 	if(ABS(ax)<4400 && ABS(ay)<4400 && ABS(az)<4400 )
 	{	
 		//把加计的三维向量转成单位向量。
@@ -127,17 +128,17 @@ void IMUupdate(float half_T,float gx, float gy, float gz, float ax, float ay, fl
 			/* 叉乘得到误差 */
 			ref.err_tmp.x = ay*reference_v.z - az*reference_v.y;
 			ref.err_tmp.y = az*reference_v.x - ax*reference_v.z;
-	    //ref.err_tmp.z = ax*reference_v.y - ay*reference_v.x;
+//			ref.err_tmp.z = ax*reference_v.y - ay*reference_v.x;
 			
 			/* 误差低通 */
 			ref_err_lpf_hz = REF_ERR_LPF_HZ *(6.28f *half_T);
 			ref.err_lpf.x += ref_err_lpf_hz *( ref.err_tmp.x  - ref.err_lpf.x );
 			ref.err_lpf.y += ref_err_lpf_hz *( ref.err_tmp.y  - ref.err_lpf.y );
-	//			 ref.err_lpf.z += ref_err_lpf_hz *( ref.err_tmp.z  - ref.err_lpf.z );
+//			ref.err_lpf.z += ref_err_lpf_hz *( ref.err_tmp.z  - ref.err_lpf.z );
 			
 			ref.err.x = ref.err_lpf.x;//
 			ref.err.y = ref.err_lpf.y;//
-//				ref.err.z = ref.err_lpf.z ;
+//			ref.err.z = ref.err_lpf.z;
 		}
 	}
 	else
@@ -146,6 +147,7 @@ void IMUupdate(float half_T,float gx, float gy, float gz, float ax, float ay, fl
 		ref.err.y = 0  ;
 //		ref.err.z = 0 ;
 	}
+	
 	/* 误差积分 */
 	ref.err_Int.x += ref.err.x *Ki *2 *half_T ;
 	ref.err_Int.y += ref.err.y *Ki *2 *half_T ;
@@ -180,8 +182,8 @@ void IMUupdate(float half_T,float gx, float gy, float gz, float ax, float ay, fl
 	}
 
 	
-	ref.g.x = (gx - reference_v.x *yaw_correct) *ANGLE_TO_RADIAN + ( Kp*(ref.err.x + ref.err_Int.x) ) ;     //IN RADIAN
-	ref.g.y = (gy - reference_v.y *yaw_correct) *ANGLE_TO_RADIAN + ( Kp*(ref.err.y + ref.err_Int.y) ) ;		  //IN RADIAN
+	ref.g.x = (gx - reference_v.x *yaw_correct) *ANGLE_TO_RADIAN + ( Kp*(ref.err.x + ref.err_Int.x) ) ;		//IN RADIAN
+	ref.g.y = (gy - reference_v.y *yaw_correct) *ANGLE_TO_RADIAN + ( Kp*(ref.err.y + ref.err_Int.y) ) ;		//IN RADIAN
 	ref.g.z = (gz - reference_v.z *yaw_correct) *ANGLE_TO_RADIAN;
 	
 	/* 用叉积误差来做PI修正陀螺零偏 */
@@ -199,11 +201,10 @@ void IMUupdate(float half_T,float gx, float gy, float gz, float ax, float ay, fl
 	ref_q[2] = ref_q[2] / norm_q;
 	ref_q[3] = ref_q[3] / norm_q;
 	
-
+	//结算出的三轴角度
 	*rol = fast_atan2(2*(ref_q[0]*ref_q[1] + ref_q[2]*ref_q[3]),1 - 2*(ref_q[1]*ref_q[1] + ref_q[2]*ref_q[2])) *57.3f;
 	*pit = asin(2*(ref_q[1]*ref_q[3] - ref_q[0]*ref_q[2])) *57.3f;
-
-	*yaw = fast_atan2(2*(-ref_q[1]*ref_q[2] - ref_q[0]*ref_q[3]), 2*(ref_q[0]*ref_q[0] + ref_q[1]*ref_q[1]) - 1) *57.3f  ;// 
+	*yaw = fast_atan2(2*(-ref_q[1]*ref_q[2] - ref_q[0]*ref_q[3]), 2*(ref_q[0]*ref_q[0] + ref_q[1]*ref_q[1]) - 1) *57.3f;// 
 	//*yaw = yaw_mag;
 
 }
