@@ -45,30 +45,41 @@ void IMUupdate(float half_T,float gx, float gy, float gz, float ax, float ay, fl
 	static xyz_f_t mag_tmp;		//
 	static float yaw_mag;
 	
-	//norm 规范，标准
 	//mag 地磁计（magnetometer）
 	
-	mag_norm_tmp = 20 *(6.28f *half_T);	
+//====================================================================================================================
+//	低通滤波器
+//====================================================================================================================
 	
+	//原理：Y(n) = qX(n) + (1-q)X(n-1)    ，  q = 2π * △t * fc，fc为截止频率
+	
+	//输入：		(float)ak8975.Mag_Val.x /( mag_norm_xyz )	归一化的磁通量数据
+	//输出：		mag_tmp.x									归一化后的经过滤波的各轴磁通量数据
+	//滤波参数：	mag_norm_tmp = 20 *(6.28f *half_T);			公式：q = 2π * △t * fc，fc为截止频率
+	
+	mag_norm_tmp = 20 *(6.28f *half_T);	//计算滤波系数， 20为截止频率
+	
+	//平方根，计算方向向量的模
 	mag_norm_xyz = my_sqrt(ak8975.Mag_Val.x * ak8975.Mag_Val.x + ak8975.Mag_Val.y * ak8975.Mag_Val.y + ak8975.Mag_Val.z * ak8975.Mag_Val.z);
 	
 	if( mag_norm_xyz != 0)
 	{
-		mag_tmp.x += mag_norm_tmp *( (float)ak8975.Mag_Val.x /( mag_norm_xyz ) - mag_tmp.x);	//x轴方向与合力（磁感线方向，认为是由北指向南）的夹角
+		mag_tmp.x += mag_norm_tmp *( (float)ak8975.Mag_Val.x /( mag_norm_xyz ) - mag_tmp.x);
 		mag_tmp.y += mag_norm_tmp *( (float)ak8975.Mag_Val.y /( mag_norm_xyz ) - mag_tmp.y);	
 		mag_tmp.z += mag_norm_tmp *( (float)ak8975.Mag_Val.z /( mag_norm_xyz ) - mag_tmp.z);	
 	}
+	
+//====================================================================================================================
 
 	/*
 	void simple_3d_trans(_xyz_f_t *ref, _xyz_f_t *in, _xyz_f_t *out)
-	
 	罗盘数据是机体坐标下的，且磁场方向不是平行于地面，如果飞机倾斜，投影计算的角度会存在误差。
 	此函数可在一定范围内做近似转换，让结果逼近实际角度，减小飞机倾斜的影响。
 	注意：该函数内的计算并不是正确也不是准确的，正确的计算相对复杂，这里不给出，在未来的版本中会再更新。
 	*/
-	simple_3d_trans(&reference_v,&mag_tmp,&mag_sim_3d); 
+	simple_3d_trans(&reference_v,&mag_tmp,&mag_sim_3d); 	//补偿飞机倾斜对磁场角度的影响
 	
-	mag_norm = my_sqrt(mag_sim_3d.x * mag_sim_3d.x + mag_sim_3d.y *mag_sim_3d.y);
+	mag_norm = my_sqrt(mag_sim_3d.x * mag_sim_3d.x + mag_sim_3d.y *mag_sim_3d.y);	//归一化的磁向量的模
 	
 	if( mag_sim_3d.x != 0 && mag_sim_3d.y != 0 && mag_sim_3d.z != 0 && mag_norm != 0)
 	{

@@ -55,7 +55,7 @@ void ANO_AK8975_Read_Mag_Data(void)
 	ak8975.Mag_Adc.y = mag_temp[1];
 	ak8975.Mag_Adc.z = mag_temp[2];
 	
-	ak8975.Mag_Val.x = (ak8975.Mag_Adc.x - ak8975.Mag_Offset.x) ;
+	ak8975.Mag_Val.x = (ak8975.Mag_Adc.x - ak8975.Mag_Offset.x) ;	//减去偏移量
 	ak8975.Mag_Val.y = (ak8975.Mag_Adc.y - ak8975.Mag_Offset.y) ;
 	ak8975.Mag_Val.z = (ak8975.Mag_Adc.z - ak8975.Mag_Offset.z) ;
 	//磁力计中点矫正	
