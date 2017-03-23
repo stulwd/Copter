@@ -28,7 +28,7 @@
 #define BYTE2(dwTemp)       ( *( (char *)(&dwTemp) + 2) )
 #define BYTE3(dwTemp)       ( *( (char *)(&dwTemp) + 3) )
 
-dt_flag_t f;					//需要发送数据的标志
+dt_flag_t f;			//需要发送数据的标志
 u8 data_to_send[50];	//发送数据缓存
 u8 checkdata_to_send,checksum_to_send;
 

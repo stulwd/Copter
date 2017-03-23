@@ -231,42 +231,45 @@ void MPU6050_Data_Offset()
 {
 #ifdef ACC_ADJ_EN
 
-    if(mpu6050.Acc_CALIBRATE == 1)
+    if(mpu6050.Acc_CALIBRATE == 1)	//上位机通过数传发送加速度计校准指令，使 mpu6050.Acc_CALIBRATE = 1
     {
-        if(my_sqrt(my_pow(mpu6050.Acc_I16.x)+my_pow(mpu6050.Acc_I16.y)+my_pow(mpu6050.Acc_I16.z)) < 2500)
+		//对两种不同版本的mpu6050进行判断，这两个版本的输出数值的物理意义有差别
+        if(my_sqrt(my_pow(mpu6050.Acc_I16.x)+my_pow(mpu6050.Acc_I16.y)+my_pow(mpu6050.Acc_I16.z)) < 2500)	//加速度计输入原始数值较小
         {
             sensor_setup.Offset.mpu_flag = 1;
         }
-        else if(my_sqrt(my_pow(mpu6050.Acc_I16.x)+my_pow(mpu6050.Acc_I16.y)+my_pow(mpu6050.Acc_I16.z)) > 2600)
+        else if(my_sqrt(my_pow(mpu6050.Acc_I16.x)+my_pow(mpu6050.Acc_I16.y)+my_pow(mpu6050.Acc_I16.z)) > 2600)	//加速度计输入原始数值较大
         {
             sensor_setup.Offset.mpu_flag = 0;
         }
 
-        acc_sum_cnt++;
-        sum_temp[A_X] += mpu6050.Acc_I16.x;
+		//对当前状态数据取平均值，作为传感器的静态偏移
+        acc_sum_cnt++;													//累加次数计数
+        sum_temp[A_X] += mpu6050.Acc_I16.x;								//对输入数据数据进行累加（x,y,z,temperature）
         sum_temp[A_Y] += mpu6050.Acc_I16.y;
-        sum_temp[A_Z] += mpu6050.Acc_I16.z - 65536/16;   // +-8G
+        sum_temp[A_Z] += mpu6050.Acc_I16.z - 65536/16;   // +-8G		
         sum_temp[TEM] += mpu6050.Tempreature;
 
-        if( acc_sum_cnt >= OFFSET_AV_NUM )
+        if( acc_sum_cnt >= OFFSET_AV_NUM )								//到达累加次数，取平均，并退出校准流程
         {
-            mpu6050.Acc_Offset.x = sum_temp[A_X]/OFFSET_AV_NUM;
+            mpu6050.Acc_Offset.x = sum_temp[A_X]/OFFSET_AV_NUM;			//取平均
             mpu6050.Acc_Offset.y = sum_temp[A_Y]/OFFSET_AV_NUM;
             mpu6050.Acc_Offset.z = sum_temp[A_Z]/OFFSET_AV_NUM;
             mpu6050.Acc_Temprea_Offset = sum_temp[TEM]/OFFSET_AV_NUM;
-            acc_sum_cnt =0;
-            mpu6050.Acc_CALIBRATE = 0;
-			f.msg_id = 1;
+            acc_sum_cnt =0;												//累加计数变量清零
+            mpu6050.Acc_CALIBRATE = 0;									//退出校准状态
+			f.msg_id = 1;												// dt_flag_t f;	需要发送数据的标志
 			f.msg_data = 1;
-            Param_SaveAccelOffset(&mpu6050.Acc_Offset);
-            sum_temp[A_X] = sum_temp[A_Y] = sum_temp[A_Z] = sum_temp[TEM] = 0;
+            Param_SaveAccelOffset(&mpu6050.Acc_Offset);					//初始化结果存入flash中，掉电不丢失
+            sum_temp[A_X] = sum_temp[A_Y] = sum_temp[A_Z] = sum_temp[TEM] = 0;	//累加变量清零
         }
     }
 
 #endif
 
-    if(mpu6050.Gyro_CALIBRATE)
+    if(mpu6050.Gyro_CALIBRATE)	//mpu6050.Gyro_CALIBRATE 可能的取值是 0，1，2      0：正常状态，不需要校准    1：上位机发送了校准指令	2：解锁的一瞬间，认为此事角速度为0
     {
+		//累加，取平均
         gyro_sum_cnt++;
         sum_temp[G_X] += mpu6050.Gyro_I16.x;
         sum_temp[G_Y] += mpu6050.Gyro_I16.y;
@@ -280,14 +283,14 @@ void MPU6050_Data_Offset()
             mpu6050.Gyro_Offset.z = (float)sum_temp[G_Z]/OFFSET_AV_NUM;
             mpu6050.Gyro_Temprea_Offset = sum_temp[TEM]/OFFSET_AV_NUM;
             gyro_sum_cnt =0;
-            if(mpu6050.Gyro_CALIBRATE == 1)
+            if(mpu6050.Gyro_CALIBRATE == 1)		//陀螺仪的默认偏移设置由上位机发出的指令触发，则将测得数据保存到flash，并向上位机返回应答。
 			{
-                Param_SaveGyroOffset(&mpu6050.Gyro_Offset);
+                Param_SaveGyroOffset(&mpu6050.Gyro_Offset);		
 				f.msg_id = 2;
 				f.msg_data = 1;
 			}
-            mpu6050.Gyro_CALIBRATE = 0;
-            sum_temp[G_X] = sum_temp[G_Y] = sum_temp[G_Z] = sum_temp[TEM] = 0;
+            mpu6050.Gyro_CALIBRATE = 0;			//退出校准状态
+            sum_temp[G_X] = sum_temp[G_Y] = sum_temp[G_Z] = sum_temp[TEM] = 0;	//累加计数器清零
         }
     }
 }
