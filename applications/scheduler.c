@@ -110,7 +110,6 @@ void Duty_20ms()
 {
 	Parameter_Save();
 }
-
 //50ms线程
 void Duty_50ms()
 {

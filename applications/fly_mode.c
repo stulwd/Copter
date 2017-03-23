@@ -5,16 +5,16 @@ u8 mode_value[10];
 u8 mode_state,mode_state_old;
 void mode_check(float *ch_in,u8 *mode_value)
 {
-	
-	if(*(ch_in+AUX1) <-200)
+	//根据AUX1通道（第5通道）的数值切换飞行模式
+	if(*(ch_in+AUX1) <-200)			//最低
 	{
-		mode_state = 0;//0;
+		mode_state = 0;		//0;
 	}
-	else if(*(ch_in+AUX1) >200)
+	else if(*(ch_in+AUX1) >200)		//中间
 	{
 		mode_state = 2;
 	}
-	else
+	else							//最高
 	{
 		mode_state = 1;
 	}
