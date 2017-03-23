@@ -39,8 +39,9 @@ u8 All_Init()
 	
 	LED_Init();								//LED功能初始化
 	
-	Usart2_Init(500000);			//串口2初始化，函数参数为波特率
-	//Usart2_Init(256000);
+//	Usart2_Init(500000);			//串口2初始化，函数参数为波特率
+//	Usart2_Init(256000);
+	Usart2_Init(115200);
 
 
 	

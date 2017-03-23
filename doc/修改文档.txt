@@ -10,3 +10,6 @@ rc.c
 
 mpu6050.c
 1.注释掉 filter_cnt_old 相关赋值
+
+init.c
+1.串口2波特率改为115200
