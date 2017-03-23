@@ -69,6 +69,10 @@ void IMUupdate(float half_T,float gx, float gy, float gz, float ax, float ay, fl
 		mag_tmp.z += mag_norm_tmp *( (float)ak8975.Mag_Val.z /( mag_norm_xyz ) - mag_tmp.z);	
 	}
 	
+	//滤波输出结果为：	mag_tmp.x
+	//					mag_tmp.y
+	//					mag_tmp.z
+	
 //====================================================================================================================
 
 	/*
@@ -87,11 +91,11 @@ void IMUupdate(float half_T,float gx, float gy, float gz, float ax, float ay, fl
 	}
 	//=============================================================================
 	// 计算等效重力向量
+	
 	reference_v.x = 2*(ref_q[1]*ref_q[3] - ref_q[0]*ref_q[2]);
 	reference_v.y = 2*(ref_q[0]*ref_q[1] + ref_q[2]*ref_q[3]);
 	reference_v.z = 1 - 2*(ref_q[1]*ref_q[1] + ref_q[2]*ref_q[2]);//ref_q[0]*ref_q[0] - ref_q[1]*ref_q[1] - ref_q[2]*ref_q[2] + ref_q[3]*ref_q[3];
 
-	
 	//这是把四元数换算成《方向余弦矩阵》中的第三列的三个元素。
 	//根据余弦矩阵和欧拉角的定义，地理坐标系的重力向量，转到机体坐标系，正好是这三个元素。
 	//所以这里的vx\y\z，其实就是当前的欧拉角（即四元数）的机体坐标参照系上，换算出来的重力单位向量。       
@@ -212,7 +216,7 @@ void IMUupdate(float half_T,float gx, float gy, float gz, float ax, float ay, fl
 	ref_q[2] = ref_q[2] / norm_q;
 	ref_q[3] = ref_q[3] / norm_q;
 	
-	//结算出的三轴角度
+	//解算出的三轴角度
 	*rol = fast_atan2(2*(ref_q[0]*ref_q[1] + ref_q[2]*ref_q[3]),1 - 2*(ref_q[1]*ref_q[1] + ref_q[2]*ref_q[2])) *57.3f;
 	*pit = asin(2*(ref_q[1]*ref_q[3] - ref_q[0]*ref_q[2])) *57.3f;
 	*yaw = fast_atan2(2*(-ref_q[1]*ref_q[2] - ref_q[0]*ref_q[3]), 2*(ref_q[0]*ref_q[0] + ref_q[1]*ref_q[1]) - 1) *57.3f;// 

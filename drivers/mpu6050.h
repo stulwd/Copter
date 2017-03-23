@@ -44,7 +44,7 @@ extern float mpu6050_tmp[ITEMS];
 extern u8 acc_3d_calibrate_f,acc_3d_step;
 
 
-#define MPU6050_ADDR         			  MPU6050_ADDRESS_AD0_LOW
+#define MPU6050_ADDR         		MPU6050_ADDRESS_AD0_LOW
 
 #define MPU6050_ADDRESS_AD0_LOW     0x68 // address pin low (GND), default for InvenSense evaluation board
 #define MPU6050_ADDRESS_AD0_HIGH    0x69 // address pin high (VCC)

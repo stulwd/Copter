@@ -86,14 +86,14 @@ void ANO_DT_Data_Exchange(void)
 {
 	static u8 cnt = 0;
 	static u8 senser_cnt 	= 10;
-	static u8 senser2_cnt = 50;
-	static u8 user_cnt 	  = 10;
+	static u8 senser2_cnt 	= 50;
+	static u8 user_cnt 	  	= 10;
 	static u8 status_cnt 	= 15;
 	static u8 rcdata_cnt 	= 20;
 	static u8 motopwm_cnt	= 20;
-	static u8 power_cnt		=	50;
-	static u8 speed_cnt   = 50;
-	static u8 location_cnt   = 200;
+	static u8 power_cnt		= 50;
+	static u8 speed_cnt   	= 50;
+	static u8 location_cnt  = 200;
 	
 	if((cnt % senser_cnt) == (senser_cnt-1))
 		f.send_senser = 1;
@@ -319,40 +319,41 @@ void ANO_DT_Data_Receive_Anl(u8 *data_buf,u8 num)
 	u8 sum = 0;
 	for(u8 i=0;i<(num-1);i++)
 		sum += *(data_buf+i);
-	if(!(sum==*(data_buf+num-1)))		return;		//判断sum
+	if(!(sum==*(data_buf+num-1)))		return;						//判断sum
 	if(!(*(data_buf)==0xAA && *(data_buf+1)==0xAF))		return;		//判断帧头
 	
-	if(*(data_buf+2)==0X01)
+	if(*(data_buf+2)==0X01)		//命令集合1（功能字为01）
 	{
-		if(*(data_buf+4)==0X01)
+		if(*(data_buf+4)==0X01)				//0x01：ACC校准
 		{
 			mpu6050.Acc_CALIBRATE = 1;
-			//mpu6050.Cali_3d = 1;
 		}
-		else if(*(data_buf+4)==0X02)
-			mpu6050.Gyro_CALIBRATE = 1;
-		else if(*(data_buf+4)==0X03)
+		else if(*(data_buf+4)==0X02)		//0x02：GYRO校准
 		{
-			mpu6050.Acc_CALIBRATE = 1;		
+			mpu6050.Gyro_CALIBRATE = 1;
+		}
+		else if(*(data_buf+4)==0X03)		//0x03：
+		{
+			mpu6050.Acc_CALIBRATE = 1;
 			mpu6050.Gyro_CALIBRATE = 1;			
 		}
-		else if(*(data_buf+4)==0X04)
+		else if(*(data_buf+4)==0X04)		//0x04：MAG校准
 		{
-			Mag_CALIBRATED = 1;
+			Mag_CALIBRATED = 1;	
 		}
-		else if((*(data_buf+4)>=0X021)&&(*(data_buf+4)<=0X26))
+		else if((*(data_buf+4)>=0X021)&&(*(data_buf+4)<=0X26))	//0x21-0x26：六面校准第1-6步
 		{
 			//acc_3d_calibrate_f = 1;
 		}
-		else if(*(data_buf+4)==0X20)
+		else if(*(data_buf+4)==0X20)		//0x20：退出六面校准
 		{
 			//acc_3d_step = 0; //退出，6面校准步清0
 		}
 	}
 	
-	if(*(data_buf+2)==0X02)
+	if(*(data_buf+2)==0X02)		//命令集合2（功能字为02）
 	{
-		if(*(data_buf+4)==0X01)
+		if(*(data_buf+4)==0X01)		//读取PID
 		{
 			f.send_pid1 = 1;
 			f.send_pid2 = 1;
@@ -361,11 +362,11 @@ void ANO_DT_Data_Receive_Anl(u8 *data_buf,u8 num)
 			f.send_pid5 = 1;
 			f.send_pid6 = 1;
 		}
-		if(*(data_buf+4)==0X02)
+		if(*(data_buf+4)==0X02)		//读取飞行模式设置
 		{
 			
 		}
-		if(*(data_buf+4)==0XA0)		//读取版本信息
+		if(*(data_buf+4)==0XA0)		//读取下位机版本信息
 		{
 			f.send_version = 1;
 		}
@@ -375,9 +376,9 @@ void ANO_DT_Data_Receive_Anl(u8 *data_buf,u8 num)
 		}
 	}
 
-	if(*(data_buf+2)==0X03)
+	if(*(data_buf+2)==0X03)		//RCDATA（命令字03）
 	{
-		if( NS != 1 )
+		if( NS != 1 )	//表示接收到数传来的遥控数据了，要对飞行控制信号看门狗进行喂狗
 		{
 			Feed_Rc_Dog(2);	//数传
 		}
@@ -392,7 +393,7 @@ void ANO_DT_Data_Receive_Anl(u8 *data_buf,u8 num)
 		RX_CH[AUX4] = (vs16)(*(data_buf+18)<<8)|*(data_buf+19) ;
 	}
 
-	if(*(data_buf+2)==0X10)								//PID1
+	if(*(data_buf+2)==0X10)			//设置 PID1 组
     {
         ctrl_1.PID[PIDROLL].kp  = 0.001*( (vs16)(*(data_buf+4)<<8)|*(data_buf+5) );
         ctrl_1.PID[PIDROLL].ki  = 0.001*( (vs16)(*(data_buf+6)<<8)|*(data_buf+7) );
@@ -403,16 +404,16 @@ void ANO_DT_Data_Receive_Anl(u8 *data_buf,u8 num)
         ctrl_1.PID[PIDYAW].kp 	= 0.001*( (vs16)(*(data_buf+16)<<8)|*(data_buf+17) );
         ctrl_1.PID[PIDYAW].ki 	= 0.001*( (vs16)(*(data_buf+18)<<8)|*(data_buf+19) );
         ctrl_1.PID[PIDYAW].kd 	= 0.001*( (vs16)(*(data_buf+20)<<8)|*(data_buf+21) );
-				if(f.send_check == 0)
-				{
-					f.send_check = 1;
-					checkdata_to_send = *(data_buf+2);
-					checksum_to_send = sum;
-				}
-			  PID_Para_Init();
-				flash_save_en_cnt = 1;
+		if(f.send_check == 0)
+		{
+			f.send_check = 1;
+			checkdata_to_send = *(data_buf+2);
+			checksum_to_send = sum;
+		}
+		PID_Para_Init();
+		flash_save_en_cnt = 1;
     }
-    if(*(data_buf+2)==0X11)								//PID2
+    if(*(data_buf+2)==0X11)			//设置 PID2 组
     {
         ctrl_2.PID[PIDROLL].kp  = 0.001*( (vs16)(*(data_buf+4)<<8)|*(data_buf+5) );
         ctrl_2.PID[PIDROLL].ki  = 0.001*( (vs16)(*(data_buf+6)<<8)|*(data_buf+7) );
@@ -424,15 +425,15 @@ void ANO_DT_Data_Receive_Anl(u8 *data_buf,u8 num)
         ctrl_2.PID[PIDYAW].ki 	= 0.001*( (vs16)(*(data_buf+18)<<8)|*(data_buf+19) );
         ctrl_2.PID[PIDYAW].kd 	= 0.001*( (vs16)(*(data_buf+20)<<8)|*(data_buf+21) );
         if(f.send_check == 0)
-				{
-					f.send_check = 1;
-					checkdata_to_send = *(data_buf+2);
-					checksum_to_send = sum;
-				}
-				PID_Para_Init();
-				flash_save_en_cnt = 1;
+		{
+			f.send_check = 1;
+			checkdata_to_send = *(data_buf+2);
+			checksum_to_send = sum;
+		}
+		PID_Para_Init();
+		flash_save_en_cnt = 1;
     }
-    if(*(data_buf+2)==0X12)								//PID3
+    if(*(data_buf+2)==0X12)			//设置 PID3 组
     {	
         pid_setup.groups.hc_sp.kp  = 0.001*( (vs16)(*(data_buf+4)<<8)|*(data_buf+5) );
         pid_setup.groups.hc_sp.ki  = 0.001*( (vs16)(*(data_buf+6)<<8)|*(data_buf+7) );
@@ -454,7 +455,7 @@ void ANO_DT_Data_Receive_Anl(u8 *data_buf,u8 num)
 				PID_Para_Init();
 				flash_save_en_cnt = 1;
     }
-	if(*(data_buf+2)==0X13)								//PID4
+	if(*(data_buf+2)==0X13)			//PID4
 	{
 		    pid_setup.groups.ctrl4.kp  = 0.001*( (vs16)(*(data_buf+4)<<8)|*(data_buf+5) );
         pid_setup.groups.ctrl4.ki  = 0.001*( (vs16)(*(data_buf+6)<<8)|*(data_buf+7) );
@@ -476,7 +477,7 @@ void ANO_DT_Data_Receive_Anl(u8 *data_buf,u8 num)
 		PID_Para_Init();
 		flash_save_en_cnt = 1;
 	}
-	if(*(data_buf+2)==0X14)								//PID5
+	if(*(data_buf+2)==0X14)			//PID5
 	{
 		if(f.send_check == 0)
 		{
@@ -485,7 +486,7 @@ void ANO_DT_Data_Receive_Anl(u8 *data_buf,u8 num)
 			checksum_to_send = sum;
 		}
 	}
-	if(*(data_buf+2)==0X15)								//PID6
+	if(*(data_buf+2)==0X15)			//PID6
 	{
 		if(f.send_check == 0)
 		{

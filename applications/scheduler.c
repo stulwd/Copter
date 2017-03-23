@@ -75,7 +75,10 @@ void Duty_2ms()
 														
 	//姿态解算（使用MPU6050数据进行姿态解算）
 	/*IMU更新姿态。输入：半个执行周期，三轴陀螺仪数据（转换到度每秒），三轴加速度计数据（4096--1G）；输出：ROLPITYAW姿态角*/
- 	IMUupdate(0.5f *inner_loop_time,mpu6050.Gyro_deg.x, mpu6050.Gyro_deg.y, mpu6050.Gyro_deg.z, mpu6050.Acc.x, mpu6050.Acc.y, mpu6050.Acc.z,&Roll,&Pitch,&Yaw);
+ 	IMUupdate(0.5f *inner_loop_time,											//半周期时间
+				mpu6050.Gyro_deg.x, mpu6050.Gyro_deg.y, mpu6050.Gyro_deg.z, 	//三轴陀螺仪数据（转换到度每秒）
+				mpu6050.Acc.x, mpu6050.Acc.y, mpu6050.Acc.z,					//三轴加速度计数据（4096--1G）
+				&Roll,&Pitch,&Yaw);												//输出：ROL PIT YAW 姿态角
 
 	CTRL_1( inner_loop_time ); 							//内环角速度控制。输入：执行周期，期望角速度，测量角速度，角度前馈；输出：电机PWM占空比。<函数未封装>
 	
