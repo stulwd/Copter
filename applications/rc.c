@@ -234,7 +234,7 @@ void Fly_Ready(float T,float height_speed_mm)
 		if( !fly_ready )
 		{
 			fly_ready = 1;		//允许解锁
-			acc_ng_cali = mpu6050.Gyro_CALIBRATE = 2;	//这个在imu.c里面被调用
+			acc_ng_cali = mpu6050.Gyro_CALIBRATE = 2;	//在解锁的一瞬间执行陀螺仪初始化，认为此时陀螺仪数值为静止时的偏移值
 		}
 		else
 		{
