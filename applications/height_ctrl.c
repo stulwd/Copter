@@ -136,11 +136,12 @@ void h_pid_init()
 float en_old;
 u8 ex_i_en_f,ex_i_en;
 
-float Height_Ctrl(float T,float thr,u8 ready,float en)
+float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 {
+	//thr：0 -- 1000
 	static u8 step,speed_cnt,height_cnt;
 	
-	if(ready == 0)
+	if(ready == 0)	//没有解锁
 	{
 		ex_i_en = ex_i_en_f = 0;
 		en = 0;
@@ -148,42 +149,6 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)
 		thr_take_off_f = 0;
 	}
 	
-	switch(step)
-	{
-		case 0:
-		{
-
-			//step = 1;
-			break;
-		}
-		case 1:
-		{
-
-			
-			step = 2;
-			break;
-		}
-		case 2:
-		{
-		
-			step = 3;
-			break;
-		}
-		case 3:
-		{
-			
-			step = 4;
-			break;
-		}	
-		case 4:
-		{
-			
-			step = 0;
-			break;
-		}	
-		default:break;	
-	
-	}
 	/*飞行中初次进入定高模式切换处理*/
 	if(ABS(en - en_old) > 0.5f)//从非定高切换到定高
 	{
@@ -201,9 +166,9 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)
 	/*定高控制*/
 	//h_pid_init();
 	
-	thr_set = my_deathzoom_2(my_deathzoom((thr - 500),0,40),0,10);
+	thr_set = my_deathzoom_2(my_deathzoom((thr - 500),0,40),0,10);	//±50为死区，零点为±40的位置
 	
-	if(thr_set>0)
+	if(thr_set>0)	//高度上升,thr_set表示上升速度占最大上升速度的比值
 	{
 		set_speed_t = thr_set/450 * MAX_VERTICAL_SPEED_UP;
 		
@@ -215,11 +180,10 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)
 			{
 				thr_take_off_f = 1; //用户可能想要起飞
 				thr_take_off = 350; //直接赋值 一次
-				
 			}
 		}
 	}
-	else
+	else	//
 	{
 		if(ex_i_en_f == 1)
 		{

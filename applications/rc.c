@@ -101,7 +101,7 @@ void RC_Duty( float T , u16 tmp16_CH[CH_NUM] )
 				
 //				if( MAX_CH[i] > MIN_CH[i] )	//这些数据是在数组中预先设定的，没有对应的遥控器适配代码，或者说是个预留功能
 //				{
-				
+					//限幅
 					//摇杆方向选择，用于适配遥控器各通道摇杆数值的正反
 					if( !CH_DIR[i] )	
 					{
@@ -137,7 +137,7 @@ void RC_Duty( float T , u16 tmp16_CH[CH_NUM] )
 		//单通道数据滤波
 		filter_A = 6.28f *10 *T;
 		
-		if( ABS(CH_TMP[i] - CH_filter[i]) < 100 )
+		if( ABS(CH_TMP[i] - CH_filter[i]) < 100 )	//差值小于100
 		{
 			CH_filter[i] +=        filter_A *( CH[i] - CH_filter[i] ) ;
 		}
@@ -182,7 +182,8 @@ void Feed_Rc_Dog(u8 ch_mode) //400ms内必须调用一次
 
 //**************************************************************************************************
 
-u8 fly_ready = 0,thr_stick_low;
+u8 fly_ready = 0;	//0：锁定	1：解锁
+u8 thr_stick_low;
 s16 ready_cnt=0;
 
 s16 mag_cali_cnt;

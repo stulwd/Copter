@@ -24,9 +24,9 @@ void Ctrl_Para_Init()		//设置默认参数
 	ctrl_1.FB = 0.20;   //外  0<fb<1
 }
 
-xyz_f_t except_A = {0,0,0};
+xyz_f_t except_A = {0,0,0};				//角度期望
 
-xyz_f_t ctrl_angle_offset = {0,0,0};
+xyz_f_t ctrl_angle_offset = {0,0,0};	
 
 xyz_f_t compensation;
 
@@ -34,18 +34,37 @@ void CTRL_2(float T)
 {
 // 	static xyz_f_t acc_no_g;
 // 	static xyz_f_t acc_no_g_lpf;
+	
+	
 //=========================== 期望角度 ========================================
+	
+	//=================== filter ===================================
+	//  全局输出，CH_filter[],0横滚，1俯仰，2油门，3航向 范围：+-500	
+	//	CH_filter[]的输入数值在输出前是经过限幅的
+	//=================== filter =================================== 
+	
+	//将±30这个区域设置为死区
+	//并把输入的 -500 -- +500 这个区间的遥控器数值归一化，然后乘上最大期望值，使输入值成为当前期望值对最大期望值的占比
+	
+	//x轴、y轴处理
 	except_A.x  = MAX_CTRL_ANGLE  *( my_deathzoom( ( CH_filter[ROL]) ,0,30 )/500.0f );   //30
-	except_A.y  = MAX_CTRL_ANGLE  *( my_deathzoom( (-CH_filter[PIT]) ,0,30 )/500.0f );  //30
-	if( Thr_Low == 0 )
+	except_A.y  = MAX_CTRL_ANGLE  *( my_deathzoom( (-CH_filter[PIT]) ,0,30 )/500.0f );   //30
+	
+	//z轴处理，将输入值转化为期望角速度
+	if( Thr_Low == 0 )	//这东西顶多跟起不起飞有关系，跟油门低不低有啥关系？？
 	{
+		//油门非低
+		//设置死区，进行归一化处理，最大角度值由最大角速度值 MAX_CTRL_YAW_SPEED 对 时间的积分 来影响
 		except_A.z += (s16)( MAX_CTRL_YAW_SPEED *( my_deathzoom_2( (CH_filter[YAW]) ,0,40 )/500.0f ) ) *T ;  //50
 	}
 	else
 	{
-		except_A.z += 1 *3.14 *T *( Yaw - except_A.z );
+		//油门低
+		except_A.z += 1 *3.14 *T *( Yaw - except_A.z );	//油门低状态下的z轴期望角速度与所处角度有关
+														//这个地方真的有点不清楚，前面那些参数和T有关，看起来像是低通滤波器
 	}
-	except_A.z = To_180_degrees(except_A.z);
+	except_A.z = To_180_degrees(except_A.z);			//将 except_A.z 的数值限制在 -180 -- +180 之间
+	
 //==============================================================================
 // 	acc_no_g.x =  mpu6050.Acc.x - reference_v.x *4096;
 // 	acc_no_g.y =  mpu6050.Acc.y - reference_v.y *4096;
@@ -60,30 +79,36 @@ void CTRL_2(float T)
 // 	compensation.z = LIMIT( 0.003f *acc_no_g_lpf.z, -10,10 );
 //==============================================================================	
 
-  /* 得到角度误差 */
-	ctrl_2.err.x =  To_180_degrees( ctrl_angle_offset.x + except_A.x - Roll  );
+	/* 得到角度误差 */
+	//将误差角度限制在±180°之间
+	ctrl_2.err.x =  To_180_degrees( ctrl_angle_offset.x + except_A.x - Roll  );	//ctrl_angle_offset的值默认为0，没有相关的设置代码
 	ctrl_2.err.y =  To_180_degrees( ctrl_angle_offset.y + except_A.y - Pitch );
 	ctrl_2.err.z =  To_180_degrees( ctrl_angle_offset.z + except_A.z - Yaw	 );
+	
 	/* 计算角度误差权重 */
-	ctrl_2.err_weight.x = ABS(ctrl_2.err.x)/ANGLE_TO_MAX_AS;
+	ctrl_2.err_weight.x = ABS(ctrl_2.err.x)/ANGLE_TO_MAX_AS;	//期望角度差 与 最大倾角的比值
 	ctrl_2.err_weight.y = ABS(ctrl_2.err.y)/ANGLE_TO_MAX_AS;
 	ctrl_2.err_weight.z = ABS(ctrl_2.err.z)/ANGLE_TO_MAX_AS;
-	/* 角度误差微分（跟随误差曲线变化）*/
+	
+	/* 角度误差微分（跟随误差曲线变化）*/			//D
 	ctrl_2.err_d.x = 10 *ctrl_2.PID[PIDROLL].kd  *(ctrl_2.err.x - ctrl_2.err_old.x) *( 0.005f/T ) ;
 	ctrl_2.err_d.y = 10 *ctrl_2.PID[PIDPITCH].kd *(ctrl_2.err.y - ctrl_2.err_old.y) *( 0.005f/T ) ;
 	ctrl_2.err_d.z = 10 *ctrl_2.PID[PIDYAW].kd 	 *(ctrl_2.err.z - ctrl_2.err_old.z) *( 0.005f/T ) ;
-	/* 角度误差积分 */
+	
+	/* 角度误差积分 */							//I
 	ctrl_2.err_i.x += ctrl_2.PID[PIDROLL].ki  *ctrl_2.err.x *T;
 	ctrl_2.err_i.y += ctrl_2.PID[PIDPITCH].ki *ctrl_2.err.y *T;
-	ctrl_2.err_i.z += ctrl_2.PID[PIDYAW].ki 	*ctrl_2.err.z *T;
+	ctrl_2.err_i.z += ctrl_2.PID[PIDYAW].ki   *ctrl_2.err.z *T;
+	
 	/* 角度误差积分分离 */
-	ctrl_2.eliminate_I.x = Thr_Weight *CTRL_2_INT_LIMIT;
+	ctrl_2.eliminate_I.x = Thr_Weight *CTRL_2_INT_LIMIT;	//生成积分值的最大幅度
 	ctrl_2.eliminate_I.y = Thr_Weight *CTRL_2_INT_LIMIT;
 	ctrl_2.eliminate_I.z = Thr_Weight *CTRL_2_INT_LIMIT;
 	/* 角度误差积分限幅 */
 	ctrl_2.err_i.x = LIMIT( ctrl_2.err_i.x, -ctrl_2.eliminate_I.x,ctrl_2.eliminate_I.x );
 	ctrl_2.err_i.y = LIMIT( ctrl_2.err_i.y, -ctrl_2.eliminate_I.y,ctrl_2.eliminate_I.y );
 	ctrl_2.err_i.z = LIMIT( ctrl_2.err_i.z, -ctrl_2.eliminate_I.z,ctrl_2.eliminate_I.z );
+	
 	/* 记录历史数据 */	
 	ctrl_2.err_old.x = ctrl_2.err.x;
 	ctrl_2.err_old.y = ctrl_2.err.y;
@@ -93,15 +118,14 @@ void CTRL_2(float T)
 	ctrl_2.err.x = LIMIT( ctrl_2.err.x, -90, 90 );
 	ctrl_2.err.y = LIMIT( ctrl_2.err.y, -90, 90 );
 	ctrl_2.err.z = LIMIT( ctrl_2.err.z, -90, 90 );
+	
 	/* 角度PID输出 */
 	ctrl_2.out.x = ctrl_2.PID[PIDROLL].kp  *( ctrl_2.err.x + ctrl_2.err_d.x + ctrl_2.err_i.x );	//rol
-	ctrl_2.out.y = ctrl_2.PID[PIDPITCH].kp *( ctrl_2.err.y + ctrl_2.err_d.y + ctrl_2.err_i.y );  //pit
-	ctrl_2.out.z = ctrl_2.PID[PIDYAW].kp   *( ctrl_2.err.z + ctrl_2.err_d.z + ctrl_2.err_i.z );
-
-
+	ctrl_2.out.y = ctrl_2.PID[PIDPITCH].kp *( ctrl_2.err.y + ctrl_2.err_d.y + ctrl_2.err_i.y ); //pitch
+	ctrl_2.out.z = ctrl_2.PID[PIDYAW].kp   *( ctrl_2.err.z + ctrl_2.err_d.z + ctrl_2.err_i.z );	//yaw
 }
 
-xyz_f_t except_AS;
+xyz_f_t except_AS;	//期望角速度
 
 float g_old[ITEMS];
 
@@ -184,12 +208,13 @@ void Thr_Ctrl(float T)
 {
 	static float thr;
 	static float Thr_tmp;
+	
 	thr = 500 + CH_filter[THR]; //油门值 0 ~ 1000
 	
-	Thr_tmp += 10 *3.14f *T *(thr_value/400.0f - Thr_tmp); //低通滤波
+	Thr_tmp += 10 *3.14f *T *(thr_value/400.0f - Thr_tmp); 			//thr_value 的低通滤波值为 Thr_tmp
 	Thr_Weight = LIMIT(Thr_tmp,0,1);    							//后边多处分离数据会用到这个值
 	
-	if( thr < 100 )
+	if( thr < 100 )	//油门低判断
 	{
 		Thr_Low = 1;
 	}
@@ -200,11 +225,11 @@ void Thr_Ctrl(float T)
 	
 /////////////////////////////////////////////////////////////////
 	
-	if(mode_value[BARO])
+	if(mode_value[BARO])	//气压计模式
 	{
 		if(NS==0) //丢失信号
 		{
-			thr = LIMIT(thr,0,500);
+			thr = LIMIT(thr,0,500);	//保持当前油门值，但不能超过半油门
 		}
 		
 		thr_value = Height_Ctrl(T,thr,fly_ready,1);   //实际使用值

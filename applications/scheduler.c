@@ -91,7 +91,7 @@ void Duty_2ms()
 void Duty_5ms()
 {
 	float outer_loop_time;
-	outer_loop_time = Get_Cycle_T(2)/1000000.0f;		//获取外环准确的执行周期
+	outer_loop_time = Get_Cycle_T(2)/1000000.0f;		//获取外环准确的执行周期，Get_Cycle_T(2)返回值的单位是us，除以1000000后单位是s
 	test[2] = GetSysTime_us()/1000000.0f;				//存储获取到的时间，但没有被调用
 
  	CTRL_2( outer_loop_time ); 							//外环角度控制。输入：执行周期，期望角度（摇杆量），姿态角度；输出：期望角速度。<函数未封装>
