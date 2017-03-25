@@ -86,7 +86,7 @@ int MS5611_Update(void)
 	
 //	I2C_FastMode = 0;
 	
-	if (state) 
+	if (state) 	//一次气压，一次温度，一样一次，自动轮换
 	{
 			MS5611_Read_Adc_P();
 			MS5611_Start_T();

@@ -66,7 +66,7 @@ void Duty_2ms()
 {
 	//获取本线程两次调用的时间差
 	float inner_loop_time;
-	inner_loop_time = Get_Cycle_T(0)/1000000.0f; 		//获取内环准确的执行周期（本次和上次调用的时间差）
+	inner_loop_time = Get_Cycle_T(0)/1000000.0f; 		//获取内环准确的执行周期（本次和上次调用的时间差，单位是s）
 	test[0] = GetSysTime_us()/1000000.0f;				//把GetSysTime_us所获取的数值存入，但似乎没有被调用，似乎是用来放在监视里看的。
 	
 	//mpu6050处理

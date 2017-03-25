@@ -131,7 +131,7 @@ void h_pid_init()
 	
 }
 
-	float thr_set,thr_pid_out,thr_out,thr_take_off,tilted_fix;
+float thr_set,thr_pid_out,thr_out,thr_take_off,tilted_fix;
 
 float en_old;
 u8 ex_i_en_f,ex_i_en;
@@ -139,12 +139,12 @@ u8 ex_i_en_f,ex_i_en;
 float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 {
 	//thr：0 -- 1000
-	static u8 step,speed_cnt,height_cnt;
+	static u8 speed_cnt,height_cnt;
 	
 	if(ready == 0)	//没有解锁
 	{
 		ex_i_en = ex_i_en_f = 0;
-		en = 0;
+		en = 0;						//转换为手动模式，此模式直接对外输出传入的油门值
 		thr_take_off = 0;
 		thr_take_off_f = 0;
 	}
@@ -166,38 +166,41 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 	/*定高控制*/
 	//h_pid_init();
 	
+	//thr_set是经过死区设置的油门控制量输入值，取值范围 -500 -- +500
 	thr_set = my_deathzoom_2(my_deathzoom((thr - 500),0,40),0,10);	//±50为死区，零点为±40的位置
 	
-	if(thr_set>0)	//高度上升,thr_set表示上升速度占最大上升速度的比值
+	if(thr_set>0)	//上升
 	{
-		set_speed_t = thr_set/450 * MAX_VERTICAL_SPEED_UP;
+		set_speed_t = thr_set/450 * MAX_VERTICAL_SPEED_UP;	//set_speed_t 表示期望上升速度占最大上升速度的比值
 		
-		if(thr_set>100)
+		if(thr_set>100)	//达到起飞油门
 		{
 			ex_i_en_f = 1;
 			
-			if(!thr_take_off_f)
+			if(!thr_take_off_f)	//没有起飞
 			{
 				thr_take_off_f = 1; //用户可能想要起飞
 				thr_take_off = 350; //直接赋值 一次
 			}
 		}
 	}
-	else	//
+	else			//悬停或下降
 	{
-		if(ex_i_en_f == 1)
+		if(ex_i_en_f == 1)	//从上电开始出现过起飞油门（第一次解锁前油门被软件拉到最低，所以把初次解锁前动油门杆不会有影响
 		{
-			ex_i_en = 1;
+			ex_i_en = 1;	//表示曾经到达过起飞油门（已经起飞或上电后曾经过）
 		}
-		set_speed_t = thr_set/450 * MAX_VERTICAL_SPEED_DW;
+		set_speed_t = thr_set/450 * MAX_VERTICAL_SPEED_DW;	//set_speed_t 表示期望上升速度占最大下降速度的比值
 	}
 	
-	set_speed_t = LIMIT(set_speed_t,-MAX_VERTICAL_SPEED_DW,MAX_VERTICAL_SPEED_UP);
+	set_speed_t = LIMIT(set_speed_t,-MAX_VERTICAL_SPEED_DW,MAX_VERTICAL_SPEED_UP);	//速度期望限幅
 	
 	//exp_speed =my_pow_2_curve(exp_speed_t,0.45f,MAX_VERTICAL_SPEED);
-	LPF_1_(10.0f,T,my_pow_2_curve(set_speed_t,0.25f,MAX_VERTICAL_SPEED_DW),set_speed);
+	LPF_1_(10.0f,T,my_pow_2_curve(set_speed_t,0.25f,MAX_VERTICAL_SPEED_DW),set_speed);	//LPF_1_是低通滤波器，截至频率是10Hz，输出值是set_speed
+																						//my_pow_2_curve把输入数据转换为2阶的曲线，在0附近平缓，在数值较大的部分卸率大
+	set_speed = LIMIT(set_speed,-MAX_VERTICAL_SPEED_DW,MAX_VERTICAL_SPEED_UP);	//限幅
 	
-	set_speed = LIMIT(set_speed,-MAX_VERTICAL_SPEED_DW,MAX_VERTICAL_SPEED_UP);
+	//至此完成对输入数据的处理（把输入数据映射到期望速度）
 	
 /////////////////////////////////////////////////////////////////////////////////	
 	baro_ctrl(T,&hc_value); //高度数据获取： 气压计数据
@@ -215,7 +218,7 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 	
 /////////////////////////////////////////////////////////////////////////////////		
 /////////////////////////////////////////////////////////////////////////////////
-	if(en < 0.1f)
+	if(en < 0.1f)							//手动模式
 	{
 		exp_speed = hc_value.fusion_speed;
 		exp_acc = hc_value.fusion_acc;
@@ -228,14 +231,14 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 	fb_speed = hc_value.fusion_speed;
 	fb_acc = safe_div(fb_speed - fb_speed_old,T,0);
 	
-	thr_pid_out = PID_calculate( T,            //周期
-														exp_acc,				//前馈
-														exp_acc,				//期望值（设定值）
-														fb_acc,			//反馈值
-														&h_acc_arg, //PID参数结构体
-														&h_acc_val,	//PID数据结构体
-														acc_i_lim*en			//integration limit，积分限幅
-														 );			//输出		
+	thr_pid_out = PID_calculate( T,            		//周期
+								 exp_acc,			//前馈
+								 exp_acc,			//期望值（设定值）
+								 fb_acc,			//反馈值
+								 &h_acc_arg, 		//PID参数结构体
+								 &h_acc_val,		//PID数据结构体
+								 acc_i_lim*en		//integration limit，积分限幅     如果在手动模式，en = 0，这个结果就是0了
+								);					//输出		
 
 	//step_filter(1000 *T,thr_pid_out,thr_pid_out_dlim);
 	
@@ -318,14 +321,10 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 		dT = 0;				
 	}		
 /////////////////////////////////////////////////////////////////////////////////	
-	if(step==0)
-	{
-		step = 1;
-	}
 	
-	if(en < 0.1f)
+	if(en < 0.1f)		//手动模式
 	{
-		return (thr);
+		return (thr);	//thr是传入的油门值，thr：0 -- 1000
 	}
 	else
 	{

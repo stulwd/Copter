@@ -120,61 +120,16 @@ float sonar_weight;
 float wz_speed,baro_com_val;				
 void baro_ctrl(float dT,_hc_value_st *height_value)
 {
-	static u8 step;
 	static float dtime;
-	
-	//
-		switch(step)
-	{
-		case 0:
-		{
-			
-			step = 1;
-			break;
-		}
-		case 1:
-		{
-
-			
-			step = 2;
-			break;
-		}
-		case 2:
-		{
-			
-			step = 3;
-			break;
-		}
-		case 3:
-		{
-			
-			step = 4;
-			break;
-		}	
-		case 4:
-		{
-			
-			step = 0;
-			break;
-		}	
-		default:break;	
-	
-	}
-
-	
+		
 	///////////
 	dtime += dT;
 	if(dtime > 0.01f) //10 ms
 	{
 		dtime = 0;
- 		if( !MS5611_Update() )//更新ms5611气压计数据
+ 		if( !MS5611_Update() )//更新ms5611气压计数据   MS5611_Update()   0：气压   1：温度
 		{
 			baro.relative_height = baro.relative_height - 0.1f *baro_com_val;
-			
-			if(step==0)
-			{
-			 step = 1;//20ms
-			}
 		}		
 	}		
 

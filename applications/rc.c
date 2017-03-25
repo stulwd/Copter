@@ -244,7 +244,7 @@ void Fly_Ready(float T,float height_speed_mm)
 		
 	}
 
-	//左杆右上满足，进行一个和初始化相关的动作
+	//左杆右上满足，进行地磁计（电子罗盘）校准
 	if(CH_filter[2] < -400 && CH_filter[3] < -400 && (CH_filter[0]>400&&CH_filter[1]>400))
 	{
 		if(mag_cali_cnt<2000)
