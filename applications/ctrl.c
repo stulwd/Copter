@@ -28,7 +28,7 @@ xyz_f_t except_A = {0,0,0};				//角度期望
 
 xyz_f_t ctrl_angle_offset = {0,0,0};	
 
-xyz_f_t compensation;
+
 
 void CTRL_2(float T)
 {
@@ -64,20 +64,6 @@ void CTRL_2(float T)
 														//这个地方真的有点不清楚，前面那些参数和T有关，看起来像是低通滤波器
 	}
 	except_A.z = To_180_degrees(except_A.z);			//将 except_A.z 的数值限制在 -180 -- +180 之间
-	
-//==============================================================================
-// 	acc_no_g.x =  mpu6050.Acc.x - reference_v.x *4096;
-// 	acc_no_g.y =  mpu6050.Acc.y - reference_v.y *4096;
-// 	acc_no_g.z =  mpu6050.Acc.z - reference_v.z *4096;
-// 	
-// 	acc_no_g_lpf.x += 0.5f *T *3.14f * ( acc_no_g.x - acc_no_g_lpf.x );
-// 	acc_no_g_lpf.y += 0.5f *T *3.14f * ( acc_no_g.y - acc_no_g_lpf.y );
-// 	acc_no_g_lpf.z += 0.5f *T *3.14f * ( acc_no_g.z - acc_no_g_lpf.z );
-// 	
-// 	compensation.x = LIMIT( 0.003f *acc_no_g_lpf.x, -10,10 );
-// 	compensation.y = LIMIT( 0.003f *acc_no_g_lpf.y, -10,10 );
-// 	compensation.z = LIMIT( 0.003f *acc_no_g_lpf.z, -10,10 );
-//==============================================================================	
 
 	/* 得到角度误差 */
 	//将误差角度限制在±180°之间
@@ -218,13 +204,14 @@ void CTRL_1(float T)  //x roll,y pitch,z yaw
 	ctrl_1.out.y = 2 *( ctrl_1.FB    * LIMIT((0.45f + 0.55f*ctrl_2.err_weight.y),0,1)  * except_AS.y           + ( 1 - ctrl_1.FB ) *  ctrl_1.PID[PIDPITCH].kp *( ctrl_1.err.y + ctrl_1.err_d.y + ctrl_1.err_i.y ) );	//*(MAX_CTRL_ASPEED/300.0f);					
 	ctrl_1.out.z = 4 *( ctrl_1.FB    * LIMIT((0.45f + 0.55f*ctrl_2.err_weight.z),0,1)  * except_AS.z           + ( 1 - ctrl_1.FB ) *  ctrl_1.PID[PIDYAW].kp   *( ctrl_1.err.z + ctrl_1.err_d.z + ctrl_1.err_i.z ) );	//*(MAX_CTRL_ASPEED/300.0f);													
 //						ctrl_1在总输   根据本次计算中外环error值计算出的外环输出值的	归一化后的外环输出值	  ctrl_1计算结果在	   							  P				 D				  I	
-//						出的占比		影响权重									  （被认为是期望角速度值）	  总输出值的占比
+//						出的占比	   影响权重										  （被认为是期望角速度值）	  总输出值的占比
 
-	Thr_Ctrl(T);// 油门控制
+	Thr_Ctrl(T);// 油门控制，这里面包含高度控制闭环
+				// 输出 thr_value
 	
-	All_Out(ctrl_1.out.x,ctrl_1.out.y,ctrl_1.out.z);
-
-
+	All_Out(ctrl_1.out.x,ctrl_1.out.y,ctrl_1.out.z);	//输出值包括两部分，posture_value 和 thr_value
+														//out_roll,out_pitch,out_yaw 生成 posture_value
+														//在 All_Out 里这两部分按照权重参数 Thr_Weight 整合
 	ctrl_1.err_old.x = ctrl_1.err.x;
 	ctrl_1.err_old.y = ctrl_1.err.y;
 	ctrl_1.err_old.z = ctrl_1.err.z;
@@ -289,14 +276,16 @@ void Thr_Ctrl(float T)
 
 float motor[MAXMOTORS];
 float posture_value[MAXMOTORS];
-//float curve[MAXMOTORS];
-	s16 motor_out[MAXMOTORS];
+s16 motor_out[MAXMOTORS];
 void All_Out(float out_roll,float out_pitch,float out_yaw)
 {
 	u8 i;
 	float posture_value[MAXMOTORS];		//由姿态PID输出数据生成的电机控制量
 	
 	out_yaw = LIMIT( out_yaw , -5*MAX_THR ,5*MAX_THR ); //50%
+
+//==============================================================================
+//电机数量切换
 	
 #if (MAXMOTORS == 4)	
 	
@@ -327,13 +316,14 @@ void All_Out(float out_roll,float out_pitch,float out_yaw)
 #else
 
 #endif
+//==============================================================================
 
 	//油门输出和姿态输出共同合成每个电机的输出
 	for(i=0;i<MAXMOTORS;i++)
 	{
 		posture_value[i] = LIMIT(posture_value[i], -1000,1000 );
 		
-		motor[i] = thr_value + Thr_Weight *posture_value[i] ;
+		motor[i] = thr_value + Thr_Weight *posture_value[i] ;	//输出值 = 油门值 + 权重 * 姿态控制值
 	}
 	
 	/* 是否解锁 */
@@ -343,7 +333,8 @@ void All_Out(float out_roll,float out_pitch,float out_yaw)
 		{
 			for(i=0;i<MAXMOTORS;i++)
 			{
-				motor[i] = LIMIT(motor[i], (10 *READY_SPEED),(10*MAX_PWM) );
+				motor[i] = LIMIT(motor[i], (10 *READY_SPEED),(10*MAX_PWM) );	//如果油门已经推起来，最低转速就被被限制在READY_SPEED
+																				//防止因为算法调整导致转速过慢电机停转
 			}
 		}
 		else						//油门低
@@ -366,15 +357,34 @@ void All_Out(float out_roll,float out_pitch,float out_yaw)
 	{
 		motor_out[i] = (s16)(motor[i]);
 	}
-		
 
-
-	
 	SetPwm(motor_out,0,1000); //1000
 	
 }
 
 /******************* (C) COPYRIGHT 2014 ANO TECH *****END OF FILE************/
+
+//一段不知道有什么用的矫正
+//原位置在 得到角度误差 前头
+
+//xyz_f_t compensation;
+
+//==============================================================================
+// 	acc_no_g.x =  mpu6050.Acc.x - reference_v.x *4096;
+// 	acc_no_g.y =  mpu6050.Acc.y - reference_v.y *4096;
+// 	acc_no_g.z =  mpu6050.Acc.z - reference_v.z *4096;
+// 	
+// 	acc_no_g_lpf.x += 0.5f *T *3.14f * ( acc_no_g.x - acc_no_g_lpf.x );
+// 	acc_no_g_lpf.y += 0.5f *T *3.14f * ( acc_no_g.y - acc_no_g_lpf.y );
+// 	acc_no_g_lpf.z += 0.5f *T *3.14f * ( acc_no_g.z - acc_no_g_lpf.z );
+// 	
+// 	compensation.x = LIMIT( 0.003f *acc_no_g_lpf.x, -10,10 );
+// 	compensation.y = LIMIT( 0.003f *acc_no_g_lpf.y, -10,10 );
+// 	compensation.z = LIMIT( 0.003f *acc_no_g_lpf.z, -10,10 );
+//==============================================================================	
+
+
+
 
 //一套被弃用的带油门曲线的电机输出计算方案
 

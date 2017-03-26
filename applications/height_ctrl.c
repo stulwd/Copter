@@ -95,9 +95,9 @@ float auto_take_off_land(float dT,u8 ready)
 	
 
 
-_PID_arg_st h_acc_arg;
-_PID_arg_st h_speed_arg;
-_PID_arg_st h_height_arg;
+_PID_arg_st h_acc_arg;		//加速度
+_PID_arg_st h_speed_arg;	//速度
+_PID_arg_st h_height_arg;	//高度
 
 _PID_val_st h_acc_val;
 _PID_val_st h_speed_val;
@@ -202,18 +202,21 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 	
 	//至此完成对输入数据的处理（把输入数据映射到期望速度）
 	
-/////////////////////////////////////////////////////////////////////////////////	
-	baro_ctrl(T,&hc_value); //高度数据获取： 气压计数据
 	
-/////////////////////////////////////////////////////////////////////////////////		
+//===============================================================================	
+	//高度数据获取： 气压计数据
+	baro_ctrl(T,&hc_value); 
+	
+//===============================================================================		
 	//计算高度误差（可加滤波）
 	set_height_em += (set_speed - hc_value.m_speed) *T;
-	set_height_em = LIMIT(set_height_em,-5000 *ex_i_en,5000 *ex_i_en);
+	set_height_em = LIMIT(set_height_em,-5000 *ex_i_en,5000 *ex_i_en);	//ex_i_en = 1 表示已经到达起飞油门
 	
-	set_height_e += (set_speed - 1.05f *hc_value.fusion_speed) *T;
+	set_height_e += (set_speed - 1.05f *hc_value.fusion_speed) *T;		//  △h =（期望速度 - 当前速度） * △t
+																		//  h(n) = h(n-1) + △h
 	set_height_e = LIMIT(set_height_e,-5000 *ex_i_en,5000 *ex_i_en);
 	
-	LPF_1_(0.05f,T,set_height_em,set_height_e);
+	LPF_1_(0.05f,T,set_height_em,set_height_e);	//频率 时间 输入 输出	//这个不像是低通滤波，而是像数据按照比例融合
 	
 	
 /////////////////////////////////////////////////////////////////////////////////		
@@ -223,14 +226,23 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 		exp_speed = hc_value.fusion_speed;
 		exp_acc = hc_value.fusion_acc;
 	}
-/////////////////////////////////////////////////////////////////////////////////	
+	
+	
+//===============================================================================
+//	加速度PID
+	
 	float acc_i_lim;
-	acc_i_lim = safe_div(150,h_acc_arg.ki,0);
+	acc_i_lim = safe_div(150,h_acc_arg.ki,0);		//acc_i_lim = 150 / h_acc_arg.ki
+													//避免除零错误（如果出现除零情况，就得0）
 	
-	fb_speed_old = fb_speed;
-	fb_speed = hc_value.fusion_speed;
-	fb_acc = safe_div(fb_speed - fb_speed_old,T,0);
+	//计算加速度
+	fb_speed_old = fb_speed;						//存储上一次的速度
+	fb_speed = hc_value.fusion_speed;				//读取当前速度
+	fb_acc = safe_div(fb_speed - fb_speed_old,T,0);	//计算得到加速度：a = dy/dt = [ x(n)-x(n-1)]/dt
 	
+	//fb_acc是当前加速度值
+	
+	//一种改进的PID算法
 	thr_pid_out = PID_calculate( T,            		//周期
 								 exp_acc,			//前馈
 								 exp_acc,			//期望值（设定值）
@@ -262,12 +274,11 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 	
 	thr_take_off = LIMIT(thr_take_off,0,THR_TAKE_OFF_LIMIT); //一半
 	
-	
 	//油门补偿
 	tilted_fix = safe_div(1,LIMIT(reference_v.z,0.707f,1),0); //45度内补偿
 	
 	//油门输出
-	thr_out = (thr_pid_out + tilted_fix *(thr_take_off) );
+	thr_out = (thr_pid_out + tilted_fix *(thr_take_off) );	//由两部分组成：油门PID + 油门补偿 * 起飞油门
 	
 	thr_out = LIMIT(thr_out,0,1000);
 	
@@ -280,14 +291,14 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 	if(speed_cnt>=10) //u8  20ms
 	{
 
-		exp_acc = PID_calculate( dT,            //周期
-														exp_speed,				//前馈
-														(set_speed + exp_speed),				//期望值（设定值）
-														hc_value.fusion_speed,			//反馈值
-														&h_speed_arg, //PID参数结构体
-														&h_speed_val,	//PID数据结构体
-														500 *en			//integration limit，积分限幅
-														 );			//输出	
+		exp_acc = PID_calculate( dT,           				//周期
+								exp_speed,					//前馈
+								(set_speed + exp_speed),	//期望值（设定值）
+								hc_value.fusion_speed,		//反馈值
+								&h_speed_arg, 				//PID参数结构体
+								&h_speed_val,				//PID数据结构体
+								500 *en						//integration limit，积分限幅
+								 );							//输出	
 		
 		exp_acc = LIMIT(exp_acc,-3000,3000);
 		
