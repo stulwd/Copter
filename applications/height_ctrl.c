@@ -32,7 +32,7 @@ float auto_take_off_land(float dT,u8 ready)
 	static u8 back_home_old;
 	static float thr_auto;
 	
-	if(ready==0)
+	if(ready==0)	//½âËøÅĞ¶Ï
 	{
 		height_ref = hc_value.fusion_height;
 		auto_take_off = 0;
