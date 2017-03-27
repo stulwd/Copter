@@ -254,7 +254,7 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 
 	//step_filter(1000 *T,thr_pid_out,thr_pid_out_dlim);
 	
-	//起飞油门
+	//基准油门调整（防止积分饱和过深）
 	if(h_acc_val.err_i > (acc_i_lim * 0.2f))
 	{
 		if(thr_take_off<THR_TAKE_OFF_LIMIT)
@@ -272,7 +272,7 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 		}
 	}
 	
-	thr_take_off = LIMIT(thr_take_off,0,THR_TAKE_OFF_LIMIT); //一半
+	thr_take_off = LIMIT(thr_take_off,0,THR_TAKE_OFF_LIMIT); //限幅
 	
 	//油门补偿
 	tilted_fix = safe_div(1,LIMIT(reference_v.z,0.707f,1),0); //45度内补偿
@@ -285,6 +285,9 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 
 	
 /////////////////////////////////////////////////////////////////////////////////	
+	
+	//速度PID
+	
 	static float dT,dT2;
 	dT += T;
 	speed_cnt++;
@@ -312,8 +315,9 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 		if(height_cnt>=10)  //200ms 
 		{
 			/////////////////////////////////////
+			//位置PID
 
-		 exp_speed = PID_calculate( dT2,            //周期
+			exp_speed = PID_calculate( 							dT2,            //周期
 																0,				//前馈
 																0,				//期望值（设定值）
 																-set_height_e,			//反馈值
