@@ -121,9 +121,9 @@ void simple_3d_trans(_xyz_f_t *ref, _xyz_f_t *in, _xyz_f_t *out) //小范围内�
 {
 	static s8 pn;
 	static float h_tmp_x,h_tmp_y;
-	
-	h_tmp_x = my_sqrt(my_pow(ref->z) + my_pow(ref->y));
-	h_tmp_y = my_sqrt(my_pow(ref->z) + my_pow(ref->x));
+	     
+	h_tmp_x = my_sqrt(my_pow(ref->z) + my_pow(ref->y));	//    √(z^2 + y^2)
+	h_tmp_y = my_sqrt(my_pow(ref->z) + my_pow(ref->x));	//    √(z^2 + x^2)
 	
 	pn = ref->z < 0? -1 : 1;
 	

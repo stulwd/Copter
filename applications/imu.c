@@ -81,14 +81,21 @@ void IMUupdate(float half_T,float gx, float gy, float gz, float ax, float ay, fl
 	此函数可在一定范围内做近似转换，让结果逼近实际角度，减小飞机倾斜的影响。
 	注意：该函数内的计算并不是正确也不是准确的，正确的计算相对复杂，这里不给出，在未来的版本中会再更新。
 	*/
+	
+	//由 reference_v 和 mag_tmp 计算出 mag_sim_3d
+	//reference_v	等效重力向量
+	//mag_tmp		经过滤波的归一化磁通量数据
+	//mag_sim_3d	输出的角度数据
 	simple_3d_trans(&reference_v,&mag_tmp,&mag_sim_3d); 	//补偿飞机倾斜对磁场角度的影响
 	
-	mag_norm = my_sqrt(mag_sim_3d.x * mag_sim_3d.x + mag_sim_3d.y *mag_sim_3d.y);	//归一化的磁向量的模
+	mag_norm = my_sqrt(mag_sim_3d.x * mag_sim_3d.x + mag_sim_3d.y *mag_sim_3d.y);	//归一化的磁向量的模 √(x^2 + y^2)
 	
 	if( mag_sim_3d.x != 0 && mag_sim_3d.y != 0 && mag_sim_3d.z != 0 && mag_norm != 0)
 	{
-		yaw_mag = fast_atan2( ( mag_sim_3d.y/mag_norm ) , ( mag_sim_3d.x/mag_norm) ) *57.3f;
+		//算出方向角，并转换为角度制
+		yaw_mag = fast_atan2( ( mag_sim_3d.y/mag_norm ) , ( mag_sim_3d.x/mag_norm) ) *57.3f; //   360/2π = 57.3f 
 	}
+	
 	//=============================================================================
 	// 计算等效重力向量
 	
@@ -96,7 +103,7 @@ void IMUupdate(float half_T,float gx, float gy, float gz, float ax, float ay, fl
 	reference_v.y = 2*(ref_q[0]*ref_q[1] + ref_q[2]*ref_q[3]);
 	reference_v.z = 1 - 2*(ref_q[1]*ref_q[1] + ref_q[2]*ref_q[2]);//ref_q[0]*ref_q[0] - ref_q[1]*ref_q[1] - ref_q[2]*ref_q[2] + ref_q[3]*ref_q[3];
 
-	//这是把四元数换算成《方向余弦矩阵》中的第三列的三个元素。
+	//这是把 四元数 换算成《方向余弦矩阵》中的第三列的三个元素。
 	//根据余弦矩阵和欧拉角的定义，地理坐标系的重力向量，转到机体坐标系，正好是这三个元素。
 	//所以这里的vx\y\z，其实就是当前的欧拉角（即四元数）的机体坐标参照系上，换算出来的重力单位向量。       
 	//=============================================================================
@@ -177,12 +184,12 @@ void IMUupdate(float half_T,float gx, float gy, float gz, float ax, float ay, fl
 	{
 		if( fly_ready  )
 		{
-			yaw_correct = Kp *0.2f *To_180_degrees(yaw_mag - Yaw);
+			yaw_correct = Kp *0.2f *To_180_degrees(yaw_mag - Yaw);	//对方向角进行低通滤波
 			//已经解锁，只需要低速纠正。
 		}
 		else
 		{
-			yaw_correct = Kp *1.5f *To_180_degrees(yaw_mag - Yaw);
+			yaw_correct = Kp *1.5f *To_180_degrees(yaw_mag - Yaw);	//对方向角进行低通滤波（滤波系数较大）
 			//没有解锁，视作开机时刻，快速纠正
 		}
 // 		if( yaw_correct>360 || yaw_correct < -360  )
@@ -196,10 +203,10 @@ void IMUupdate(float half_T,float gx, float gy, float gz, float ax, float ay, fl
 		yaw_correct = 0; //角度过大，停止修正，修正的目标值可能不正确
 	}
 
-	
+	//gx：陀螺仪数据x轴（x轴角速度）
 	ref.g.x = (gx - reference_v.x *yaw_correct) *ANGLE_TO_RADIAN + ( Kp*(ref.err.x + ref.err_Int.x) ) ;		//IN RADIAN
 	ref.g.y = (gy - reference_v.y *yaw_correct) *ANGLE_TO_RADIAN + ( Kp*(ref.err.y + ref.err_Int.y) ) ;		//IN RADIAN
-	ref.g.z = (gz - reference_v.z *yaw_correct) *ANGLE_TO_RADIAN;
+	ref.g.z = (gz - reference_v.z *yaw_correct) *ANGLE_TO_RADIAN;											//ANGLE_TO_RADIAN  角度转弧度   ANGLE_TO_RADIAN = 2π/360
 	
 	/* 用叉积误差来做PI修正陀螺零偏 */
 
