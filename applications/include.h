@@ -13,7 +13,7 @@
 
 //================系统===================
 
-//#define USE_US100           //使用us100型号超声波 
+//#define USE_US100			//使用us100型号超声波
 #define	USE_KS103			//使用KS103型号超声波
 
 #define MAXMOTORS 			(4)		//电机数量

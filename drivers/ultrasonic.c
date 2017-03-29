@@ -5,7 +5,22 @@
 
 void Ultrasonic_Init()
 {
-  Uart5_Init(9600);			//串口5初始化，函数参数为波特率
+	Uart5_Init(9600);			//串口5初始化，函数参数为波特率
+	
+	#if defined(USE_KS103)
+	
+	//配置电源滤波
+	u8 temp[3];
+	temp[0] = 0xe8;			//默认地址是0xe8
+	temp[1] = 0x02;
+	temp[2] = 0x72;			//DC-DC降压模块环境下用72或73（0x70-0x75，其中0x70对应供电稳定性最好、滤波等级最低的情况）
+	Uart5_Send(temp ,3);
+	
+	Delay_ms(2000);			//延时2s，等待KS103超声波传感器设置生效
+	
+	#elif defined(USE_US100)
+
+	#endif
 }
 
 s8 ultra_start_f;
