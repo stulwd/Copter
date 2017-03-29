@@ -13,7 +13,7 @@ void Ultrasonic_Init()
 	u8 temp[3];
 	temp[0] = 0xe8;			//默认地址是0xe8
 	temp[1] = 0x02;
-	temp[2] = 0x72;			//DC-DC降压模块环境下用72或73（0x70-0x75，其中0x70对应供电稳定性最好、滤波等级最低的情况）
+	temp[2] = 0x75;			//DC-DC降压模块环境下用72或73（0x70-0x75，其中0x70对应供电稳定性最好、滤波等级最低的情况）
 	Uart5_Send(temp ,3);
 	
 	Delay_ms(2000);			//延时2s，等待KS103超声波传感器设置生效
@@ -50,7 +50,8 @@ void Ultra_Duty()
 	
 	temp[0] = 0xe8;
 	temp[1] = 0x02;
-	temp[2] = 0xb4;			//0xb4 -- 5m    0xbc -- 11m
+	temp[2] = 0xb0;			//0xb0  -- 5m -- 33ms    0xb4 -- 5m -- 78ms   0xbc -- 11m -- 78ms
+							//为了保证采集周期不超过50ms，选择0xb0（不带温度补偿）的工作模式
 	Uart5_Send(temp ,3);
 
 	#elif defined(USE_US100)
