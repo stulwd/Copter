@@ -144,7 +144,7 @@ void baro_ctrl(float dT,_hc_value_st *height_value)
 			acc_fusion(dT,&baro_f_set,acc_3d_hg.z,&baro_p,&baro_fusion);
 	
 //////////////////////////////////////////				
-			if(ultra.measure_ok == 1)
+			if(ultra.measure_ok == 1)	//超声波数据有效
 			{
 				
 				sonar_weight += 0.5f *dtime;

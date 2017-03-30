@@ -11,6 +11,9 @@
 #include "data_transfer.h"
 #include "ultrasonic.h"
 
+//========================================================================================================
+//USART5
+
 void Usart2_Init(u32 br_num)
 {
 	USART_InitTypeDef USART_InitStructure;
@@ -30,22 +33,22 @@ void Usart2_Init(u32 br_num)
 
 	
 	GPIO_PinAFConfig(GPIOD, GPIO_PinSource5, GPIO_AF_USART2);
-  GPIO_PinAFConfig(GPIOD, GPIO_PinSource6, GPIO_AF_USART2);
+	GPIO_PinAFConfig(GPIOD, GPIO_PinSource6, GPIO_AF_USART2);
 	
 	//配置PD5作为USART2　Tx
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5; 
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP ;
-  GPIO_Init(GPIOD, &GPIO_InitStructure); 
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP ;
+	GPIO_Init(GPIOD, &GPIO_InitStructure); 
 	//配置PD6作为USART2　Rx
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6 ; 
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-  GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;
-  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL ;
-  GPIO_Init(GPIOD, &GPIO_InitStructure); 
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL ;
+	GPIO_Init(GPIOD, &GPIO_InitStructure); 
 	
 	//配置USART2
 	//中断被屏蔽了
@@ -77,9 +80,9 @@ void Usart2_Init(u32 br_num)
 
 }
 
-u8 TxBuffer[256];
-u8 TxCounter=0;
-u8 count=0; 
+u8 TxBuffer[256];	//这里必须是256，因为计数变量使u8的，加到255后自动回0
+u8 TxCounter=0;		//发送指针
+u8 count=0; 		//数据存入指针
 
 u8 Rx_Buf[256];	//串口接收缓存
 
@@ -112,9 +115,6 @@ void Usart2_IRQ(void)
 
 		//USART_ClearITPendingBit(USART2,USART_IT_TXE);
 	}
-
-
-
 }
 
 void Usart2_Send(unsigned char *DataToSend ,u8 data_num)
@@ -132,7 +132,8 @@ void Usart2_Send(unsigned char *DataToSend ,u8 data_num)
 
 }
 
-
+//========================================================================================================
+//USART5
 
 void Uart5_Init(u32 br_num)
 {
@@ -154,22 +155,22 @@ void Uart5_Init(u32 br_num)
 
 	
 	GPIO_PinAFConfig(GPIOC, GPIO_PinSource12, GPIO_AF_UART5);
-  GPIO_PinAFConfig(GPIOD, GPIO_PinSource2, GPIO_AF_UART5);
+	GPIO_PinAFConfig(GPIOD, GPIO_PinSource2, GPIO_AF_UART5);
 	
 	//配置PC12作为UART5　Tx
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12; 
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP ;
-  GPIO_Init(GPIOC, &GPIO_InitStructure); 
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP ;
+	GPIO_Init(GPIOC, &GPIO_InitStructure); 
 	//配置PD2作为UART5　Rx
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2 ; 
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-  GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;
-  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL ;
-  GPIO_Init(GPIOD, &GPIO_InitStructure); 
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL ;
+	GPIO_Init(GPIOD, &GPIO_InitStructure); 
 	
 	//配置UART5
 	//中断被屏蔽了
@@ -194,7 +195,7 @@ void Uart5_Init(u32 br_num)
 //	}
 
 }
-u8 Tx5Buffer[256];
+u8 Tx5Buffer[256];	//这里必须是256，因为计数变量使u8的，加到255后自动回0
 u8 Tx5Counter=0;
 u8 count5=0; 
 
@@ -202,33 +203,41 @@ void Uart5_IRQ(void)
 {
 	u8 com_data;
 
-  //接收中断
+	//接收中断
 	if( USART_GetITStatus(UART5,USART_IT_RXNE) )
 	{
 		USART_ClearITPendingBit(UART5,USART_IT_RXNE);//清除中断标志
 
 		com_data = UART5->DR;
 		
-		Ultra_Get(com_data);
+		Ultra_Get(com_data);	//把接收到的8位数据传入超声波传感器处理函数Ultra_Get()
 	}
 
 	//发送（进入移位）中断
 	if( USART_GetITStatus(UART5,USART_IT_TXE ) )
 	{
-				
 		UART5->DR = Tx5Buffer[Tx5Counter++]; //写DR清除中断标志
+		
+		//添加超声波串口的模块匹配处理
+		#if defined(USE_KS103)
+		
+		Delay_us(20);	//按照KS103的要求，每次发送完需要延时20-100us再进行下一位发送
+		
+		#elif defined(USE_US100)
+		
+		#endif
           
-		if(Tx5Counter == count5)
+		if(Tx5Counter == count5)	//
 		{
 			UART5->CR1 &= ~USART_CR1_TXEIE;		//关闭TXE（发送中断）中断
 		}
-
 
 		//USART_ClearITPendingBit(USART2,USART_IT_TXE);
 	}
 
 }
 
+//调用此函数会把数据存入发送缓冲队列，并打开串口发送中断（如果串口发送中断没有打开）
 void Uart5_Send(unsigned char *DataToSend ,u8 data_num)
 {
 	u8 i;
