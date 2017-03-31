@@ -24,74 +24,74 @@ _hc_value_st hc_value;
 
 
 u8 thr_take_off_f = 0;
-u8 auto_take_off,auto_land;
-float height_ref;
+//u8 auto_take_off,auto_land;
+//float height_ref;
 
-float auto_take_off_land(float dT,u8 ready)
-{
-	static u8 back_home_old;
-	static float thr_auto;
-	
-	if(ready==0)	//解锁判断
-	{
-		height_ref = hc_value.fusion_height;
-		auto_take_off = 0;
-	}
-	
-	if(Thr_Low == 1 && fly_ready == 0)
-	{
-		if(mode_value[BACK_HOME] == 1 && back_home_old == 0) //起飞之前，并且解锁之前，非返航模式拨到返航模式
-		{
-				if(auto_take_off==0)  //第一步，自动起飞标记0->1
-				{
-					auto_take_off = 1;
-				}
-		}
-	}
-	
-	switch(auto_take_off)
-	{
-		case 1:
-		{
-			if(thr_take_off_f ==1)
-			{
-				auto_take_off = 2;
-			}
-			break;
-		}
-		case 2:
-		{
-			if(hc_value.fusion_height - height_ref>500)
-			{
-				if(auto_take_off==2) //已经触发自动起飞
-				{
-					auto_take_off = 3;
-				}
-			}
-		
-		}
-		default:break;
-	}
+//float auto_take_off_land(float dT,u8 ready)
+//{
+//	static u8 back_home_old;
+//	static float thr_auto;
+//	
+//	if(ready==0)	//解锁判断
+//	{
+//		height_ref = hc_value.fusion_height;
+//		auto_take_off = 0;
+//	}
+//	
+//	if(Thr_Low == 1 && fly_ready == 0)
+//	{
+//		if(mode_value[BACK_HOME] == 1 && back_home_old == 0) //起飞之前，并且解锁之前，非返航模式拨到返航模式
+//		{
+//				if(auto_take_off==0)  //第一步，自动起飞标记0->1
+//				{
+//					auto_take_off = 1;
+//				}
+//		}
+//	}
+//	
+//	switch(auto_take_off)
+//	{
+//		case 1:
+//		{
+//			if(thr_take_off_f ==1)
+//			{
+//				auto_take_off = 2;
+//			}
+//			break;
+//		}
+//		case 2:
+//		{
+//			if(hc_value.fusion_height - height_ref>500)
+//			{
+//				if(auto_take_off==2) //已经触发自动起飞
+//				{
+//					auto_take_off = 3;
+//				}
+//			}
+//		
+//		}
+//		default:break;
+//	}
 
-	
+//	
 
-	
-	if(auto_take_off == 2)
-	{
-		thr_auto = 200;
-	}
-	else if(auto_take_off == 3)
-	{
-		thr_auto -= 200 *dT;
-	
-	}
-	
-	thr_auto = LIMIT(thr_auto,0,300);
-	
-	back_home_old = mode_value[BACK_HOME]; //记录模式历史
-		
-	return (thr_auto);
-}
+//	
+//	if(auto_take_off == 2)
+//	{
+//		thr_auto = 200;
+//	}
+//	else if(auto_take_off == 3)
+//	{
+//		thr_auto -= 200 *dT;
+//	
+//	}
+//	
+//	thr_auto = LIMIT(thr_auto,0,300);
+//	
+//	back_home_old = mode_value[BACK_HOME]; //记录模式历史
+//		
+//	return (thr_auto);
+//}
 	
 
 
@@ -138,6 +138,14 @@ u8 ex_i_en_f,ex_i_en;
 
 float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 {
+	/*
+	 * 这套算法有个很有意思的地方：
+	 * 加速度PID用的期望加速度值是上个周期速度PID算出来的，
+	 * 速度PID用的期望速度值是上个周期位置PID算出来的
+	 * 这样看这个代码的实时性其实是非常不好的，速度--加速度延迟20ms，位置--速度延迟20ms，整体来看延迟了40ms
+	 * 
+	 */
+	
 	//thr：0 -- 1000
 	static u8 speed_cnt,height_cnt;
 	
@@ -198,7 +206,7 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 	//exp_speed =my_pow_2_curve(exp_speed_t,0.45f,MAX_VERTICAL_SPEED);
 	LPF_1_(10.0f,T,my_pow_2_curve(set_speed_t,0.25f,MAX_VERTICAL_SPEED_DW),set_speed);	//LPF_1_是低通滤波器，截至频率是10Hz，输出值是set_speed
 																						//my_pow_2_curve把输入数据转换为2阶的曲线，在0附近平缓，在数值较大的部分卸率大
-	set_speed = LIMIT(set_speed,-MAX_VERTICAL_SPEED_DW,MAX_VERTICAL_SPEED_UP);	//限幅
+	set_speed = LIMIT(set_speed,-MAX_VERTICAL_SPEED_DW,MAX_VERTICAL_SPEED_UP);	//限幅，单位mm/s
 	
 	//至此完成对输入数据的处理（把输入数据映射到期望速度 set_speed ）
 	
@@ -209,7 +217,7 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 	
 //===============================================================================		
 	//计算高度误差（可加滤波）
-	set_height_em += (set_speed - hc_value.m_speed) *T;
+	set_height_em += (set_speed - hc_value.m_speed) *T;					//高度差 = ∑速度差*T （单位 mm/s）
 	set_height_em = LIMIT(set_height_em,-5000 *ex_i_en,5000 *ex_i_en);	//ex_i_en = 1 表示已经到达起飞油门
 	
 	set_height_e += (set_speed - 1.05f *hc_value.fusion_speed) *T;		//  △h =（期望速度 - 当前速度） * △t
@@ -218,15 +226,15 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 	
 	LPF_1_(0.05f,T,set_height_em,set_height_e);	//频率 时间 输入 输出	//这个不像是低通滤波，而是像数据按照比例融合
 	
+	//得出高度差 set_height_e ，单位 mm
 	
-/////////////////////////////////////////////////////////////////////////////////		
-/////////////////////////////////////////////////////////////////////////////////
+//===============================================================================
+
 	if(en < 0.1f)							//手动模式
 	{
 		exp_speed = hc_value.fusion_speed;
 		exp_acc = hc_value.fusion_acc;
 	}
-	
 	
 //===============================================================================
 //	加速度PID
@@ -240,7 +248,7 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 	fb_speed = hc_value.fusion_speed;				//读取当前速度
 	fb_acc = safe_div(fb_speed - fb_speed_old,T,0);	//计算得到加速度：a = dy/dt = [ x(n)-x(n-1)]/dt
 	
-	//fb_acc是当前加速度值
+	//fb_acc是当前加速度值（反馈回来的加速度值）
 	
 	//加速度PID
 	thr_pid_out = PID_calculate( T,            		//周期
@@ -293,7 +301,8 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 	speed_cnt++;
 	if(speed_cnt>=10) //u8  20ms
 	{
-
+		speed_cnt = 0;
+		
 		exp_acc = PID_calculate( dT,           				//周期
 								exp_speed,					//前馈				//exp_speed由位置PID给出
 								(set_speed + exp_speed),	//期望值（设定值）	//set_speed由油门输入给出，exp_speed由位置PID给出
@@ -304,36 +313,34 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 								 );							//输出	
 		
 		exp_acc = LIMIT(exp_acc,-3000,3000);
+		dT = 0;
 		
+		//这段代码像是在计算目标高度差
 		//integra_fix += (exp_speed - hc_value.m_speed) *dT;
 		//integra_fix = LIMIT(integra_fix,-1500 *en,1500 *en);
-		
 		//LPF_1_(0.5f,dT,integra_fix,h_speed_val.err_i);
 		
-		dT2 += dT;
-		height_cnt++;
+		dT2 += dT;		//计算微分时间
+		height_cnt++;	//计算循环执行周期
 		if(height_cnt>=10)  //200ms 
 		{
-			/////////////////////////////////////
+			height_cnt = 0;
+			
 			//位置PID
-
+			//输入的反馈值是高度差而不是高度，相当于已经把error输入了，所以期望值为0时正好是 error = error - 0
 			exp_speed = PID_calculate( 		dT2,            //周期
 											0,				//前馈
 											0,				//期望值（设定值）
-											-set_height_e,	//反馈值
+											-set_height_e,	//反馈值				高度差，单位mm
 											&h_height_arg, 	//PID参数结构体
 											&h_height_val,	//PID数据结构体
 											1500 *en		//integration limit，积分限幅
-									);			//输出	
-			
+									 );			//输出	
 			exp_speed = LIMIT(exp_speed,-300,300);
-			/////////////////////////////////////
+			
 			dT2 = 0;
-			height_cnt = 0;
 		}
-		
-		speed_cnt = 0;
-		dT = 0;				
+						
 	}		
 /////////////////////////////////////////////////////////////////////////////////	
 	
