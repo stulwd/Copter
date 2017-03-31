@@ -16,83 +16,18 @@
 #include "include.h"
 #include "fly_mode.h"
 
-float	set_height_e,set_height_em,
-			set_speed_t,set_speed,exp_speed,fb_speed,
-			exp_acc,fb_acc,fb_speed,fb_speed_old;
+float	set_height_e,
+		set_height_em,
+		set_speed_t,	//遥控器数据转换为期望速度时用的中间变量，经过低通滤波得到set_speed
+		set_speed,		//遥控器设置的期望速度，单位mm/s
+		exp_speed,		//位置PID算出的期望速度，用于速度PID
+		fb_speed,
+		exp_acc,fb_acc,fb_speed,fb_speed_old;
 
 _hc_value_st hc_value;
 
 
 u8 thr_take_off_f = 0;
-//u8 auto_take_off,auto_land;
-//float height_ref;
-
-//float auto_take_off_land(float dT,u8 ready)
-//{
-//	static u8 back_home_old;
-//	static float thr_auto;
-//	
-//	if(ready==0)	//解锁判断
-//	{
-//		height_ref = hc_value.fusion_height;
-//		auto_take_off = 0;
-//	}
-//	
-//	if(Thr_Low == 1 && fly_ready == 0)
-//	{
-//		if(mode_value[BACK_HOME] == 1 && back_home_old == 0) //起飞之前，并且解锁之前，非返航模式拨到返航模式
-//		{
-//				if(auto_take_off==0)  //第一步，自动起飞标记0->1
-//				{
-//					auto_take_off = 1;
-//				}
-//		}
-//	}
-//	
-//	switch(auto_take_off)
-//	{
-//		case 1:
-//		{
-//			if(thr_take_off_f ==1)
-//			{
-//				auto_take_off = 2;
-//			}
-//			break;
-//		}
-//		case 2:
-//		{
-//			if(hc_value.fusion_height - height_ref>500)
-//			{
-//				if(auto_take_off==2) //已经触发自动起飞
-//				{
-//					auto_take_off = 3;
-//				}
-//			}
-//		
-//		}
-//		default:break;
-//	}
-
-//	
-
-//	
-//	if(auto_take_off == 2)
-//	{
-//		thr_auto = 200;
-//	}
-//	else if(auto_take_off == 3)
-//	{
-//		thr_auto -= 200 *dT;
-//	
-//	}
-//	
-//	thr_auto = LIMIT(thr_auto,0,300);
-//	
-//	back_home_old = mode_value[BACK_HOME]; //记录模式历史
-//		
-//	return (thr_auto);
-//}
-	
 
 
 _PID_arg_st h_acc_arg;		//加速度
@@ -217,14 +152,18 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 	
 //===============================================================================		
 	//计算高度误差（可加滤波）
-	set_height_em += (set_speed - hc_value.m_speed) *T;					//高度差 = ∑速度差*T （单位 mm/s）
-	set_height_em = LIMIT(set_height_em,-5000 *ex_i_en,5000 *ex_i_en);	//ex_i_en = 1 表示已经到达起飞油门
 	
-	set_height_e += (set_speed - 1.05f *hc_value.fusion_speed) *T;		//  △h =（期望速度 - 当前速度） * △t
-																		//  h(n) = h(n-1) + △h
-	set_height_e = LIMIT(set_height_e,-5000 *ex_i_en,5000 *ex_i_en);
+	//高度差 = ∑速度差*T （单位 mm/s）
+	//h(n) = h(n-1) + △h  ， △h =（期望速度 - 当前速度） * △t
 	
-	LPF_1_(0.05f,T,set_height_em,set_height_e);	//频率 时间 输入 输出	//这个不像是低通滤波，而是像数据按照比例融合
+	//
+	set_height_em += (set_speed -        hc_value.m_speed)      * T;	//没有经过加速度修正和带通滤波的速度值算出的速度差 * △T
+	set_height_em = LIMIT(set_height_em,-5000 *ex_i_en,5000 *ex_i_en);	//ex_i_en = 1 表示已经到达起飞油门，否则为0
+	
+	set_height_e += (set_speed  - 1.05f *hc_value.fusion_speed) * T;	//经过加速度修正和带通滤波的速度值算出的速度差 * △T
+	set_height_e  = LIMIT(set_height_e ,-5000 *ex_i_en,5000 *ex_i_en);
+	
+	LPF_1_(0.05f,T,set_height_em,set_height_e);	//频率 时间 输入 输出	//两个速度差按比例融合，第一个参数越大，set_height_em的占比越大
 	
 	//得出高度差 set_height_e ，单位 mm
 	
@@ -258,9 +197,8 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 								 &h_acc_arg, 		//PID参数结构体
 								 &h_acc_val,		//PID数据结构体
 								 acc_i_lim*en		//integration limit，积分限幅     如果在手动模式，en = 0，这个结果就是0了
-								);					//输出		
-
-	//step_filter(1000 *T,thr_pid_out,thr_pid_out_dlim);
+								);					//输出
+								
 	
 	//基准油门调整（防止积分饱和过深）
 	if(h_acc_val.err_i > (acc_i_lim * 0.2f))
@@ -279,18 +217,15 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 			h_acc_val.err_i += safe_div(150,h_acc_arg.ki,0) *T;
 		}
 	}
-	
 	thr_take_off = LIMIT(thr_take_off,0,THR_TAKE_OFF_LIMIT); //限幅
 	
-	//油门补偿
+/////////////////////////////////////////////////////////////////////////////////
+	
+	//油门补偿、油门输出
 	tilted_fix = safe_div(1,LIMIT(reference_v.z,0.707f,1),0); //45度内补偿
-	
-	//油门输出
 	thr_out = (thr_pid_out + tilted_fix *(thr_take_off) );	//由两部分组成：油门PID + 油门补偿 * 起飞油门
-	
 	thr_out = LIMIT(thr_out,0,1000);
 	
-
 	
 /////////////////////////////////////////////////////////////////////////////////	
 	
@@ -356,3 +291,72 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 }
 
 /******************* (C) COPYRIGHT 2016 ANO TECH *****END OF FILE************/
+
+//u8 auto_take_off,auto_land;
+//float height_ref;
+
+//float auto_take_off_land(float dT,u8 ready)
+//{
+//	static u8 back_home_old;
+//	static float thr_auto;
+//	
+//	if(ready==0)	//解锁判断
+//	{
+//		height_ref = hc_value.fusion_height;
+//		auto_take_off = 0;
+//	}
+//	
+//	if(Thr_Low == 1 && fly_ready == 0)
+//	{
+//		if(mode_value[BACK_HOME] == 1 && back_home_old == 0) //起飞之前，并且解锁之前，非返航模式拨到返航模式
+//		{
+//				if(auto_take_off==0)  //第一步，自动起飞标记0->1
+//				{
+//					auto_take_off = 1;
+//				}
+//		}
+//	}
+//	
+//	switch(auto_take_off)
+//	{
+//		case 1:
+//		{
+//			if(thr_take_off_f ==1)
+//			{
+//				auto_take_off = 2;
+//			}
+//			break;
+//		}
+//		case 2:
+//		{
+//			if(hc_value.fusion_height - height_ref>500)
+//			{
+//				if(auto_take_off==2) //已经触发自动起飞
+//				{
+//					auto_take_off = 3;
+//				}
+//			}
+//		
+//		}
+//		default:break;
+//	}
+
+//	
+
+//	
+//	if(auto_take_off == 2)
+//	{
+//		thr_auto = 200;
+//	}
+//	else if(auto_take_off == 3)
+//	{
+//		thr_auto -= 200 *dT;
+//	
+//	}
+//	
+//	thr_auto = LIMIT(thr_auto,0,300);
+//	
+//	back_home_old = mode_value[BACK_HOME]; //记录模式历史
+//		
+//	return (thr_auto);
+//}

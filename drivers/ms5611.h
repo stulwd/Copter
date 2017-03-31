@@ -25,7 +25,7 @@ typedef struct
 {
 	s32 height;//cm
 	
-	float relative_height;	
+	float relative_height;
 	float h_delta;
 	float h_dt;
 	

@@ -33,18 +33,22 @@ float baro_compensate(float dT,float kup,float kdw,float vz,float lim)	//ÆøÑ¹²¹³
 	return (com_val);
 }
 
+//ÉèÖÃËÀÇø¡¢Æ½¾ùÊýÂË²¨¡¢µ¥Î»»¯Îªmm¡¢ÓÃ¾àÀë±ä»¯¼ÆËãËÙ¶È¡¢¼ÓËÙ¶È
 void fusion_prepare(float dT,float av_arr[],u16 av_num,u16 *av_cnt,float deadzone,_height_st *data,_fusion_p_st *pre_data)
 {
-	pre_data->dis_deadzone = my_deathzoom(data->relative_height,pre_data->dis_deadzone,deadzone);	
-	Moving_Average(av_arr,av_num ,(av_cnt),(10 *pre_data->dis_deadzone ),&(pre_data->displacement)); //ÀåÃ×->ºÁÃ×
+	//av_cnt È¡Æ½¾ù´ÎÊý
 	
-//	Moving_Average(av_arr,av_num ,(av_cnt),(10 *data->relative_height),&(pre_data->dis_deadzone)); //ÀåÃ×->ºÁÃ×	
+	//ÏÈÉèÖÃËÀÇø£¬ÔÙ°Ñµ¥Î»´ÓÀåÃ××ªÎªºÁÃ×£¬×îºóÈ¡¶à´ÎÆ½¾ùÖµ
+	pre_data->dis_deadzone = my_deathzoom(data->relative_height,pre_data->dis_deadzone,deadzone);		//ÉèÖÃËÀÇø
+	Moving_Average(av_arr,av_num ,(av_cnt),(10 *pre_data->dis_deadzone ),&(pre_data->displacement));	//È¡Æ½¾ùÖµ£¬ÀåÃ×->ºÁÃ×
+	
+//	Moving_Average(av_arr,av_num ,(av_cnt),(10 *data->relative_height),&(pre_data->dis_deadzone)); 		//ÀåÃ×->ºÁÃ×	
 //	pre_data->displacement = my_deathzoom(pre_data->dis_deadzone,pre_data->displacement,10 *deadzone);
 	
-	pre_data->speed = safe_div(pre_data->displacement - pre_data->displacement_old,dT,0);
+	pre_data->speed = safe_div(pre_data->displacement - pre_data->displacement_old,dT,0);	//ËÙ¶È = £¨±¾´Î¸ß¶È-ÉÏ´Î¸ß¶È£©¡ÂÊ±¼ä
 	pre_data->acceleration = safe_div(pre_data->speed - pre_data->speed_old,dT,0);
 	
-	
+	//¼ÇÂ¼¾ÉÊý¾Ý
 	pre_data->displacement_old = pre_data->displacement;
 	pre_data->speed_old = pre_data->speed;
 }
@@ -55,9 +59,9 @@ void acc_fusion(float dT,_f_set_st *set,float est_acc,_fusion_p_st *pre_data,_fu
 	fusion->fusion_acceleration.out += est_acc - fusion->est_acc_old; //¹À¼Æ
 	anotc_filter_1(set->b1,set->g1,dT,pre_data->acceleration,&(fusion->fusion_acceleration));  //pre_data->acceleration //¹Û²â¡¢×îÓÅ
 	
-	fusion->fusion_speed_m.out += 1.1f *my_deathzoom(fusion->fusion_acceleration.out,0,20) *dT;
-	anotc_filter_1(set->b2,set->g2,dT,pre_data->speed,&(fusion->fusion_speed_m));
-	anotc_filter_1(set->b2,set->g2,dT,(-pre_data->speed + fusion->fusion_speed_m.out),&(fusion->fusion_speed_me));
+	fusion->fusion_speed_m.out += 1.1f *my_deathzoom(fusion->fusion_acceleration.out,0,20) *dT;	//¼ÓËÙ¶ÈÐÞÕýËÙ¶È
+	anotc_filter_1(set->b2,set->g2,dT,pre_data->speed,&(fusion->fusion_speed_m));				//pre_data->speed¾­¹ý´øÍ¨ÂË²¨µÃµ½fusion->fusion_speed_m
+	anotc_filter_1(set->b2,set->g2,dT,(-pre_data->speed + fusion->fusion_speed_m.out),&(fusion->fusion_speed_me));	//±»´øÍ¨ÂËµôµÄËÙ¶È·ÖÁ¿ ½øÐÐ´øÍ¨ÂË²¨ µÃµ½ fusion_speed_me
 	fusion->fusion_speed_me.out = LIMIT(fusion->fusion_speed_me.out,-200,200);
 	fusion->fusion_speed_m.a = LIMIT(fusion->fusion_speed_m.a,-1000,1000);
 	
@@ -82,7 +86,10 @@ _f_set_st sonar_f_set = {
 													
 													0.2f,
 													0.5f,
-													0.8f	
+													0.8f
+						};
+
+
 //													0.2f,
 //													0.3f,
 //													0.5f,
@@ -90,8 +97,6 @@ _f_set_st sonar_f_set = {
 //													0.1f,
 //													0.3f,
 //													0.5f
-
-												};
 
 //ÆøÑ¹¼ÆÈÚºÏ²ÎÊý											
 #define BARO_AV_NUM 100
@@ -107,6 +112,7 @@ _f_set_st baro_f_set = {
 													0.1f,
 													0.1f,
 													0.2f	
+						};
 
 //													0.2f,
 //													0.3f,
@@ -115,8 +121,6 @@ _f_set_st baro_f_set = {
 //													0.1f,
 //													0.3f,
 //													0.5f
-
-												};
 
 float sonar_weight;
 float wz_speed,baro_com_val;
@@ -132,24 +136,30 @@ void baro_ctrl(float dT,_hc_value_st *height_value)		//»ñÈ¡¸ß¶ÈÊý¾Ý£¨µ÷ÓÃÖÜÆÚ2ms
  		if( !MS5611_Update() )//¸üÐÂms5611ÆøÑ¹¼ÆÊý¾Ý£¨10msµ÷ÓÃÒ»´Î£¬Ã¿µ÷ÓÃÁ½´Î»á¶ÁÈ¡Ò»´ÎÆøÑ¹¼Æ£©   MS5611_Update()   0£ºÆøÑ¹   1£ºÎÂ¶È
 		{
 			baro.relative_height = baro.relative_height - 0.1f *baro_com_val;
-		}		
+		}
 	}		
 
 	baro.h_dt = 0.02f; //ÆøÑ¹¼Æ¶ÁÈ¡¼ä¸ôÊ±¼ä20ms
 	
+	//ÆøÑ¹¼Æ²¹³¥
 	baro_com_val = baro_compensate(dT,1.0f,1.0f,reference_v.z,3500);	//dT >= 2ms£¨2ms×óÓÒ£©
 
-	fusion_prepare(dT,sonar_av_arr,SONAR_AV_NUM,&sonar_av_cnt,0,&ultra,&sonar);
-	acc_fusion(dT,&sonar_f_set,acc_3d_hg.z,&sonar,&sonar_fusion);
+	//³¬Éù²¨Êý¾Ý¼ÓËÙ¶ÈÈÚºÏ
+	fusion_prepare(dT,sonar_av_arr,SONAR_AV_NUM,&sonar_av_cnt,0,&ultra,&sonar);	//ÉèÖÃËÀÇø¡¢Æ½¾ùÊýÂË²¨¡¢µ¥Î»»¯Îªmm¡¢ÓÃ¾àÀë±ä»¯¼ÆËãËÙ¶È¡¢¼ÓËÙ¶È
+	acc_fusion(	dT,			&sonar_f_set,	acc_3d_hg.z,	&sonar,				&sonar_fusion);				//acc_3d_hg.z¡¢sonarÊÇÊäÈë£¬sonar_fusionÊÇÊä³ö
+	//		   Ê±¼äÎ¢·Ö		ÉèÖÃ²ÎÊý			¼ÓËÙ¶ÈÖµ			×¼±¸ºÃµÄÊý¾Ý			ÈÚºÏÊä³ö
 	
+	//ÆøÑ¹¼ÆÊý¾Ý¼ÓËÙ¶ÈÈÚºÏ
 	fusion_prepare(dT,baro_av_arr,BARO_AV_NUM,&baro_av_cnt,2,&baro,&baro_p);
-	acc_fusion(dT,&baro_f_set,acc_3d_hg.z,&baro_p,&baro_fusion);
+	acc_fusion(	dT,			&baro_f_set,	acc_3d_hg.z,	&baro_p,			&baro_fusion);
+	//		   Ê±¼äÎ¢·Ö		ÉèÖÃ²ÎÊý			¼ÓËÙ¶ÈÖµ			×¼±¸ºÃµÄÊý¾Ý			ÈÚºÏÊä³ö
 	
-//////////////////////////////////////////				
+//==========================================================================
+//¼ÆËã³¬Éù²¨Êý¾ÝÕ¼×ÜÊý¾ÝµÄÈ¨ÖØ
+	
 	if(ultra.measure_ok == 1)	//³¬Éù²¨Êý¾ÝÓÐÐ§
 	{
-		
-		sonar_weight += 0.5f *dtime;
+		sonar_weight += 0.5f *dtime;	//sonar_weightÔ½´ó£¬³¬Éù²¨Êý¾ÝµÄÈ¨ÖØÔ½¸ß
 	}
 	else
 	{ 
@@ -163,18 +173,20 @@ void baro_ctrl(float dT,_hc_value_st *height_value)		//»ñÈ¡¸ß¶ÈÊý¾Ý£¨µ÷ÓÃÖÜÆÚ2ms
 		sonar_weight = 0;
 	}
 
-//////////////////////////////////////////
-	wz_speed = baro_fusion.fusion_speed_m.out - baro_fusion.fusion_speed_me.out;
+//==========================================================================
+	wz_speed = baro_fusion.fusion_speed_m.out - baro_fusion.fusion_speed_me.out;	//wz_speed ÊÇÆøÑ¹¼ÆÊý¾ÝµÃ³öµÄÏà¶Ô×¼È·µÄ´¹Ö±ËÙ¶È
+	//		   ÈÚºÏÁË¼ÓËÙ¶È¼ÆÊý¾Ý¾­¹ý´øÍ¨ÂË²¨		±»´øÍ¨ÂËµôµÄÆøÑ¹¼ÆËÙ¶ÈÁ¿¾­¹ý´øÍ¨ÂË²¨
 	
+	//ÆøÑ¹¼Æ¡¢³¬Éù²¨Ô­Ê¼Êý¾ÝÈÚºÏ
 	float m_speed,f_speed;
-	m_speed = (1 - sonar_weight) *baro_p.speed + sonar_weight *(sonar.speed);
-	f_speed = (1 - sonar_weight) *(wz_speed) + sonar_weight *(sonar_fusion.fusion_speed_m.out - sonar_fusion.fusion_speed_me.out);
+	m_speed = (1 - sonar_weight) *baro_p.speed + sonar_weight *(sonar.speed);															//Êý¾ÝÔ´£º¾­¹ýÆ½¾ùÊýÂË²¨¡¢µ¥Î»×ª»»ÎªmmµÄËÙ¶ÈÖµ
+	f_speed = (1 - sonar_weight) *(wz_speed)   + sonar_weight *(sonar_fusion.fusion_speed_m.out - sonar_fusion.fusion_speed_me.out);	//Êý¾ÝÔ´£ºÈÚºÏÁË¼ÓËÙ¶È¼ÆµÄÊý¾Ý
 	
 	height_value->m_acc = acc_3d_hg.z;
-	height_value->m_speed = m_speed;  //(1 - sonar_weight) *hf1.ref_speed_lpf + sonar_weight *(sonar.speed);
+	height_value->m_speed = m_speed;  //(1 - sonar_weight) *hf1.ref_speed_lpf + sonar_weight *(sonar.speed);	//m_speed
 	height_value->m_height = baro_p.displacement;
 	height_value->fusion_acc = baro_fusion.fusion_acceleration.out;
-	height_value->fusion_speed = my_deathzoom(LIMIT( (f_speed),-MAX_VERTICAL_SPEED_DW,MAX_VERTICAL_SPEED_UP),height_value->fusion_speed,10);
+	height_value->fusion_speed = my_deathzoom(LIMIT( (f_speed),-MAX_VERTICAL_SPEED_DW,MAX_VERTICAL_SPEED_UP),height_value->fusion_speed,10);	//f_speedÏÞ·ù+ËÀÇø£¨Èç¹û±ä»¯Ð¡£¬¾ÍÈÏÎªÃ»±ä»¯£©
 	height_value->fusion_height = baro_fusion.fusion_displacement.out; 
 	
 	//return (*height_value);
