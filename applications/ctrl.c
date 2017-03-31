@@ -252,7 +252,7 @@ void Thr_Ctrl(float T)
 									//也就是说定高模式丢信号时只能悬停或下降（依照丢信号前状态）
 		}
 		
-		thr_value = Height_Ctrl(T,thr,fly_ready,1);   //实际使用值
+		thr_value = Height_Ctrl(T,thr,fly_ready,1);   //输出经过定高算法修正的值
 	}
 	else					//手动模式
 	{
@@ -267,7 +267,7 @@ void Thr_Ctrl(float T)
 	thr_value = LIMIT(thr_value,0,10 *MAX_THR *MAX_PWM/100);	//油门值限幅
 																//thr_value直接被用于计算电机输出（是最终的油门输出值）
 	
-	//计算权重参数 Thr_Weight，油门越高，权重越大
+	//计算权重参数 Thr_Weight，油门越高，权重越大（表示姿态输出在总输出中占比增大）
 	Thr_tmp += 10 *3.14f *T *(thr_value/400.0f - Thr_tmp); 			//thr_value 的低通滤波值为 Thr_tmp
 	Thr_Weight = LIMIT(Thr_tmp,0,1);    							//后边多处分离数据会用到这个值
 	

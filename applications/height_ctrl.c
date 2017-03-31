@@ -164,7 +164,7 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 	}
 	
 	/*定高控制*/
-	//h_pid_init();
+
 	
 	//thr_set是经过死区设置的油门控制量输入值，取值范围 -500 -- +500
 	thr_set = my_deathzoom_2(my_deathzoom((thr - 500),0,40),0,10);	//±50为死区，零点为±40的位置
@@ -200,11 +200,11 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 																						//my_pow_2_curve把输入数据转换为2阶的曲线，在0附近平缓，在数值较大的部分卸率大
 	set_speed = LIMIT(set_speed,-MAX_VERTICAL_SPEED_DW,MAX_VERTICAL_SPEED_UP);	//限幅
 	
-	//至此完成对输入数据的处理（把输入数据映射到期望速度）
+	//至此完成对输入数据的处理（把输入数据映射到期望速度 set_speed ）
 	
 	
 //===============================================================================	
-	//高度数据获取： 气压计数据
+	//高度数据获取（获取气压计数据，调用超声波数据，融合计算高度数据）
 	baro_ctrl(T,&hc_value); 
 	
 //===============================================================================		
@@ -242,10 +242,10 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 	
 	//fb_acc是当前加速度值
 	
-	//一种改进的PID算法
+	//加速度PID
 	thr_pid_out = PID_calculate( T,            		//周期
-								 exp_acc,			//前馈
-								 exp_acc,			//期望值（设定值）
+								 exp_acc,			//前馈				//exp_acc由速度PID给出
+								 exp_acc,			//期望值（设定值）	//exp_acc由速度PID给出
 								 fb_acc,			//反馈值
 								 &h_acc_arg, 		//PID参数结构体
 								 &h_acc_val,		//PID数据结构体
@@ -295,8 +295,8 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 	{
 
 		exp_acc = PID_calculate( dT,           				//周期
-								exp_speed,					//前馈
-								(set_speed + exp_speed),	//期望值（设定值）
+								exp_speed,					//前馈				//exp_speed由位置PID给出
+								(set_speed + exp_speed),	//期望值（设定值）	//set_speed由油门输入给出，exp_speed由位置PID给出
 								hc_value.fusion_speed,		//反馈值
 								&h_speed_arg, 				//PID参数结构体
 								&h_speed_val,				//PID数据结构体
@@ -317,14 +317,14 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 			/////////////////////////////////////
 			//位置PID
 
-			exp_speed = PID_calculate( 							dT2,            //周期
-																0,				//前馈
-																0,				//期望值（设定值）
-																-set_height_e,			//反馈值
-																&h_height_arg, //PID参数结构体
-																&h_height_val,	//PID数据结构体
-																1500 *en			//integration limit，积分限幅
-																 );			//输出	
+			exp_speed = PID_calculate( 		dT2,            //周期
+											0,				//前馈
+											0,				//期望值（设定值）
+											-set_height_e,	//反馈值
+											&h_height_arg, 	//PID参数结构体
+											&h_height_val,	//PID数据结构体
+											1500 *en		//integration limit，积分限幅
+									);			//输出	
 			
 			exp_speed = LIMIT(exp_speed,-300,300);
 			/////////////////////////////////////
@@ -340,10 +340,11 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 	if(en < 0.1f)		//手动模式
 	{
 		return (thr);	//thr是传入的油门值，thr：0 -- 1000
+						//把传入油门直接传出去了，上面所有算法都没用上
 	}
 	else
 	{
-		return (thr_out);
+		return (thr_out);	//经过定高运算的油门值
 	}
 }
 

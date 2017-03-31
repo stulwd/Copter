@@ -8,15 +8,15 @@ void mode_check(float *ch_in,u8 *mode_value)
 	//根据AUX1通道（第5通道）的数值切换飞行模式
 	if(*(ch_in+AUX1) <-200)			//最低
 	{
-		mode_state = 0;		//0;
+		mode_state = 0;	//手动油门
 	}
 	else if(*(ch_in+AUX1) >200)		//中间
 	{
-		mode_state = 2;
+		mode_state = 2;	//超声波+气压计融合
 	}
 	else							//最高
 	{
-		mode_state = 1;
+		mode_state = 1;	//气压计定高
 	}
 	
 	//=========== GPS、气压定高 ===========

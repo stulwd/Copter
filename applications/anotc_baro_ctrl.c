@@ -11,7 +11,7 @@
 #include "filter.h"
 #include "fly_mode.h"
 
-float baro_compensate(float dT,float kup,float kdw,float vz,float lim)
+float baro_compensate(float dT,float kup,float kdw,float vz,float lim)	//气压补偿
 {
 	float z_sin;
 	static float com_val,com_tar;
@@ -49,7 +49,8 @@ void fusion_prepare(float dT,float av_arr[],u16 av_num,u16 *av_cnt,float deadzon
 	pre_data->speed_old = pre_data->speed;
 }
 
-void acc_fusion(float dT,_f_set_st *set,float est_acc,_fusion_p_st *pre_data,_fusion_st *fusion)
+//加速度融合
+void acc_fusion(float dT,_f_set_st *set,float est_acc,_fusion_p_st *pre_data,_fusion_st *fusion)	
 {
 	fusion->fusion_acceleration.out += est_acc - fusion->est_acc_old; //估计
 	anotc_filter_1(set->b1,set->g1,dT,pre_data->acceleration,&(fusion->fusion_acceleration));  //pre_data->acceleration //观测、最优
@@ -106,6 +107,7 @@ _f_set_st baro_f_set = {
 													0.1f,
 													0.1f,
 													0.2f	
+
 //													0.2f,
 //													0.3f,
 //													0.5f,
@@ -117,63 +119,63 @@ _f_set_st baro_f_set = {
 												};
 
 float sonar_weight;
-float wz_speed,baro_com_val;				
-void baro_ctrl(float dT,_hc_value_st *height_value)
+float wz_speed,baro_com_val;
+void baro_ctrl(float dT,_hc_value_st *height_value)		//获取高度数据（调用周期2ms）
 {
 	static float dtime;
 		
 	///////////
-	dtime += dT;
+	dtime += dT;	//传入的dT在数学上是△T，单位是s
 	if(dtime > 0.01f) //10 ms
 	{
 		dtime = 0;
- 		if( !MS5611_Update() )//更新ms5611气压计数据   MS5611_Update()   0：气压   1：温度
+ 		if( !MS5611_Update() )//更新ms5611气压计数据（10ms调用一次，每调用两次会读取一次气压计）   MS5611_Update()   0：气压   1：温度
 		{
 			baro.relative_height = baro.relative_height - 0.1f *baro_com_val;
 		}		
 	}		
 
-			baro.h_dt = 0.02f; //气压计读取间隔时间20ms
-			
-			baro_com_val = baro_compensate(dT,1.0f,1.0f,reference_v.z,3500);
+	baro.h_dt = 0.02f; //气压计读取间隔时间20ms
 	
-			fusion_prepare(dT,sonar_av_arr,SONAR_AV_NUM,&sonar_av_cnt,0,&ultra,&sonar);
-			acc_fusion(dT,&sonar_f_set,acc_3d_hg.z,&sonar,&sonar_fusion);
-			
-			fusion_prepare(dT,baro_av_arr,BARO_AV_NUM,&baro_av_cnt,2,&baro,&baro_p);
-			acc_fusion(dT,&baro_f_set,acc_3d_hg.z,&baro_p,&baro_fusion);
+	baro_com_val = baro_compensate(dT,1.0f,1.0f,reference_v.z,3500);	//dT >= 2ms（2ms左右）
+
+	fusion_prepare(dT,sonar_av_arr,SONAR_AV_NUM,&sonar_av_cnt,0,&ultra,&sonar);
+	acc_fusion(dT,&sonar_f_set,acc_3d_hg.z,&sonar,&sonar_fusion);
+	
+	fusion_prepare(dT,baro_av_arr,BARO_AV_NUM,&baro_av_cnt,2,&baro,&baro_p);
+	acc_fusion(dT,&baro_f_set,acc_3d_hg.z,&baro_p,&baro_fusion);
 	
 //////////////////////////////////////////				
-			if(ultra.measure_ok == 1)	//超声波数据有效
-			{
-				
-				sonar_weight += 0.5f *dtime;
-			}
-			else
-			{ 
-				sonar_weight -= 2.0f *dtime;
-			}
-			sonar_weight = LIMIT(sonar_weight,0,1);
-			
-			//中位不使用超声波
-			if(mode_state == 1)
-			{
-				sonar_weight = 0;
-			}
+	if(ultra.measure_ok == 1)	//超声波数据有效
+	{
+		
+		sonar_weight += 0.5f *dtime;
+	}
+	else
+	{ 
+		sonar_weight -= 2.0f *dtime;
+	}
+	sonar_weight = LIMIT(sonar_weight,0,1);
+	
+	//中位不使用超声波
+	if(mode_state == 1)	//通道5选择气压计模式，超声波数据不参与高度数据融合
+	{
+		sonar_weight = 0;
+	}
 
 //////////////////////////////////////////
-			wz_speed = baro_fusion.fusion_speed_m.out - baro_fusion.fusion_speed_me.out;
-			
-			float m_speed,f_speed;
-			m_speed = (1 - sonar_weight) *baro_p.speed + sonar_weight *(sonar.speed);
-			f_speed = (1 - sonar_weight) *(wz_speed) + sonar_weight *(sonar_fusion.fusion_speed_m.out - sonar_fusion.fusion_speed_me.out);
-			
-			height_value->m_acc = acc_3d_hg.z;
-			height_value->m_speed = m_speed;  //(1 - sonar_weight) *hf1.ref_speed_lpf + sonar_weight *(sonar.speed);
-			height_value->m_height = baro_p.displacement;
-			height_value->fusion_acc = baro_fusion.fusion_acceleration.out;
-			height_value->fusion_speed = my_deathzoom(LIMIT( (f_speed),-MAX_VERTICAL_SPEED_DW,MAX_VERTICAL_SPEED_UP),height_value->fusion_speed,10);
-			height_value->fusion_height = baro_fusion.fusion_displacement.out; 
+	wz_speed = baro_fusion.fusion_speed_m.out - baro_fusion.fusion_speed_me.out;
+	
+	float m_speed,f_speed;
+	m_speed = (1 - sonar_weight) *baro_p.speed + sonar_weight *(sonar.speed);
+	f_speed = (1 - sonar_weight) *(wz_speed) + sonar_weight *(sonar_fusion.fusion_speed_m.out - sonar_fusion.fusion_speed_me.out);
+	
+	height_value->m_acc = acc_3d_hg.z;
+	height_value->m_speed = m_speed;  //(1 - sonar_weight) *hf1.ref_speed_lpf + sonar_weight *(sonar.speed);
+	height_value->m_height = baro_p.displacement;
+	height_value->fusion_acc = baro_fusion.fusion_acceleration.out;
+	height_value->fusion_speed = my_deathzoom(LIMIT( (f_speed),-MAX_VERTICAL_SPEED_DW,MAX_VERTICAL_SPEED_UP),height_value->fusion_speed,10);
+	height_value->fusion_height = baro_fusion.fusion_displacement.out; 
 	
 	//return (*height_value);
 }
