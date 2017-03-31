@@ -84,26 +84,31 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 	//thr：0 -- 1000
 	static u8 speed_cnt,height_cnt;
 	
-	if(ready == 0)	//没有解锁
+//==============================================================================================
+//解锁状态判断（如果没有解锁，则把起飞判断、高度pid积分都清零
+	
+	if(ready == 0)	//没有解锁（已经上锁）
 	{
 		ex_i_en = ex_i_en_f = 0;
 		en = 0;						//转换为手动模式，此模式直接对外输出传入的油门值
-		thr_take_off = 0;
-		thr_take_off_f = 0;
+		thr_take_off = 0;			//起飞油门 = 0
+		thr_take_off_f = 0;			//起飞指示归零（表示没有起飞）
 	}
 	
 	/*飞行中初次进入定高模式切换处理*/
-	if(ABS(en - en_old) > 0.5f)//从非定高切换到定高
+	if( ABS(en - en_old) > 0.5f )	//从非定高切换到定高（官方注释）
+									//我认为是模式在飞行中被切换，切换方向不确定
 	{
-		if(thr_take_off<10)//未计算起飞油门
+		if(thr_take_off<10)			//未计算起飞油门（官方注释）
 		{
-			if(thr_set > -150)
+			if(thr_set > -150)	//thr_set是经过死区设置的油门控制量输入值，取值范围 -500 -- +500。
+								//thr_set > -150 代表油门非低
 			{
 				thr_take_off = 400;
 				
 			}
 		}
-		en_old = en;
+		en_old = en;	//更新历史模式
 	}
 	
 	/*定高控制*/
@@ -112,6 +117,9 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 	//thr_set是经过死区设置的油门控制量输入值，取值范围 -500 -- +500
 	thr_set = my_deathzoom_2(my_deathzoom((thr - 500),0,40),0,10);	//±50为死区，零点为±40的位置
 	
+//==============================================================================================
+// 油门控制飞机进行上升\下降（将油门值转化为期望垂直速度值 set_speed_t）
+
 	if(thr_set>0)	//上升
 	{
 		set_speed_t = thr_set/450 * MAX_VERTICAL_SPEED_UP;	//set_speed_t 表示期望上升速度占最大上升速度的比值
@@ -120,9 +128,9 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 		{
 			ex_i_en_f = 1;
 			
-			if(!thr_take_off_f)	//没有起飞
+			if(!thr_take_off_f)	//如果没有起飞（本次解锁后还没有起飞）
 			{
-				thr_take_off_f = 1; //用户可能想要起飞
+				thr_take_off_f = 1; //用户可能想要起飞（切换为已经起飞）
 				thr_take_off = 350; //直接赋值 一次
 			}
 		}
