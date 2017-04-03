@@ -212,6 +212,8 @@ void CTRL_1(float T)  //x roll,y pitch,z yaw
 	All_Out(ctrl_1.out.x,ctrl_1.out.y,ctrl_1.out.z);	//输出值包括两部分，posture_value 和 thr_value
 														//out_roll,out_pitch,out_yaw 生成 posture_value
 														//在 All_Out 里这两部分按照权重参数 Thr_Weight 整合
+														
+	//记录历史数据
 	ctrl_1.err_old.x = ctrl_1.err.x;
 	ctrl_1.err_old.y = ctrl_1.err.y;
 	ctrl_1.err_old.z = ctrl_1.err.z;

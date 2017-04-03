@@ -87,14 +87,14 @@ enum
 #define ANGLE_TO_MAX_AS 		30.0f										//角度误差N时，期望角速度达到最大（可以通过调整CTRL_2的P值调整）
 #define CTRL_2_INT_LIMIT 		0.5f *MAX_CTRL_ANGLE						//外环积分幅度
 
-#define MAX_CTRL_ASPEED 	 	300.0f									//ROL,PIT允许的最大控制角速度
-#define MAX_CTRL_YAW_SPEED 		150.0f									//YAW允许的最大控制角速度
-#define CTRL_1_INT_LIMIT 		0.5f *MAX_CTRL_ASPEED		//内环积分幅度
+#define MAX_CTRL_ASPEED 	 	300.0f										//ROL,PIT允许的最大控制角速度
+#define MAX_CTRL_YAW_SPEED 		150.0f										//YAW允许的最大控制角速度
+#define CTRL_1_INT_LIMIT 		0.5f *MAX_CTRL_ASPEED						//内环积分幅度
 
 
-#define MAX_PWM				100			///%	最大PWM输出为100%油门
-#define MAX_THR       80 			///%	油门通道最大占比80%，留20%给控制量
-#define READY_SPEED   20			///%	解锁后电机转速20%油门
+#define MAX_PWM			100			///%	最大PWM输出为100%油门
+#define MAX_THR       	80 			///%	油门通道最大占比80%，留20%给控制量
+#define READY_SPEED   	20			///%	解锁后电机转速20%油门
 //=========================================
 
 
