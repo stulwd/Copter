@@ -69,7 +69,7 @@ void h_pid_init()
 float thr_set,thr_pid_out,thr_out,thr_take_off,tilted_fix;
 
 float en_old;
-u8 ex_i_en_f,ex_i_en;
+u8 ex_i_en;
 
 float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 {
@@ -89,58 +89,46 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 	
 	if(ready == 0)	//没有解锁（已经上锁）
 	{
-		ex_i_en = ex_i_en_f = 0;
+		thr_take_off_f = 0;				//表示没有起飞
 		en = 0;						//转换为手动模式，此模式直接对外输出传入的油门值
-		thr_take_off = 0;			//起飞油门 = 0
-		thr_take_off_f = 0;			//起飞指示归零（表示没有起飞）
+		thr_take_off = 0;			//基准油门 = 0
 	}
 	
 	/*飞行中初次进入定高模式切换处理*/
-	if( ABS(en - en_old) > 0.5f )	//从非定高切换到定高（官方注释）
-									//我认为是模式在飞行中被切换，切换方向不确定
+	if( ABS(en - en_old) > 0.5f )	//从非定高切换到定高（官方注释）	//我认为是模式在飞行中被切换，切换方向不确定
 	{
 		if(thr_take_off<10)			//未计算起飞油门（官方注释）
 		{
-			if(thr_set > -150)	//thr_set是经过死区设置的油门控制量输入值，取值范围 -500 -- +500。
-								//thr_set > -150 代表油门非低
+			if(thr_set > -150)	//thr_set是经过死区设置的油门控制量输入值，取值范围 -500 -- +500。		//thr_set > -150 代表油门非低				
 			{
 				thr_take_off = 400;
-				
 			}
 		}
 		en_old = en;	//更新历史模式
 	}
 	
-	/*定高控制*/
-
+//==============================================================================================
+// 油门控制飞机进行上升\下降（将油门值转化为期望垂直速度值 set_speed_t）
 	
 	//thr_set是经过死区设置的油门控制量输入值，取值范围 -500 -- +500
 	thr_set = my_deathzoom_2(my_deathzoom((thr - 500),0,40),0,10);	//±50为死区，零点为±40的位置
 	
-//==============================================================================================
-// 油门控制飞机进行上升\下降（将油门值转化为期望垂直速度值 set_speed_t）
-
 	if(thr_set>0)	//上升
 	{
 		set_speed_t = thr_set/450 * MAX_VERTICAL_SPEED_UP;	//set_speed_t 表示期望上升速度占最大上升速度的比值
 		
-		if(thr_set>100)	//达到起飞油门
+		//起飞处理
+		if(thr_take_off_f == 0)	//如果没有起飞（本次解锁后还没有起飞）
 		{
-			ex_i_en_f = 1;
-			
-			if(!thr_take_off_f)	//如果没有起飞（本次解锁后还没有起飞）
+			if(thr_set>100)	//达到起飞油门
 			{
-				thr_take_off_f = 1; //用户可能想要起飞（切换为已经起飞）
-				thr_take_off = 350; //直接赋值 一次
+				thr_take_off_f = 1;	//起飞标志置1，此标志只在上锁后会被归零
+				thr_take_off = 350; //直接赋值起飞基准油门
 			}
 		}
 	}
 	else			//悬停或下降
 	{
-		if(ex_i_en_f == 1)	//从上电开始出现过起飞油门（第一次解锁前油门被软件拉到最低，所以把初次解锁前动油门杆不会有影响
-		{
-			ex_i_en = 1;	//表示曾经到达过起飞油门（已经起飞或上电后曾经过）
-		}
 		set_speed_t = thr_set/450 * MAX_VERTICAL_SPEED_DW;	//set_speed_t 表示期望上升速度占最大下降速度的比值
 	}
 	
@@ -164,7 +152,9 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 	//高度差 = ∑速度差*T （单位 mm/s）
 	//h(n) = h(n-1) + △h  ， △h =（期望速度 - 当前速度） * △t
 	
-	//
+	//用解锁状态给目标高度差积分控制变量赋值，只有在ex_i_en = 1时才会开始积分计算目标高度差
+	ex_i_en = thr_take_off_f;
+	
 	set_height_em += (set_speed -        hc_value.m_speed)      * T;	//没有经过加速度修正和带通滤波的速度值算出的速度差 * △T
 	set_height_em = LIMIT(set_height_em,-5000 *ex_i_en,5000 *ex_i_en);	//ex_i_en = 1 表示已经到达起飞油门，否则为0
 	
@@ -368,3 +358,28 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 //		
 //	return (thr_auto);
 //}
+
+//	旧的起飞判断代码
+//	if(thr_set>0)	//上升
+//	{
+//		set_speed_t = thr_set/450 * MAX_VERTICAL_SPEED_UP;	//set_speed_t 表示期望上升速度占最大上升速度的比值
+//		
+//		if(thr_set>100)	//达到起飞油门
+//		{
+//			ex_i_en_f = 1;
+//			
+//			if(!thr_take_off_f)	//如果没有起飞（本次解锁后还没有起飞）
+//			{
+//				thr_take_off_f = 1; //用户可能想要起飞（切换为已经起飞）
+//				thr_take_off = 350; //直接赋值 一次
+//			}
+//		}
+//	}
+//	else			//悬停或下降
+//	{
+//		if(ex_i_en_f == 1)	//从上电开始出现过起飞油门（第一次解锁前油门被软件拉到最低，所以把初次解锁前动油门杆不会有影响
+//		{
+//			ex_i_en = 1;	//表示曾经到达过起飞油门（已经起飞或上电后曾经过）
+//		}
+//		set_speed_t = thr_set/450 * MAX_VERTICAL_SPEED_DW;	//set_speed_t 表示期望上升速度占最大下降速度的比值
+//	}
