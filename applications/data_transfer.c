@@ -84,6 +84,9 @@ static void ANO_DT_Send_Msg(u8 id, u8 data)
 extern float ultra_dis_lpf;
 void ANO_DT_Data_Exchange(void)
 {
+//================================================================================
+//发送时间判断
+
 	static u8 cnt = 0;
 	static u8 senser_cnt 	= 10;
 	static u8 senser2_cnt 	= 50;
@@ -99,38 +102,43 @@ void ANO_DT_Data_Exchange(void)
 		f.send_senser = 1;
 
 	if((cnt % senser2_cnt) == (senser2_cnt-1))
-		f.send_senser2 = 1;	
+		f.send_senser2 = 1;
 
 	if((cnt % user_cnt) == (user_cnt-2))
 		f.send_user = 1;
 	
 	if((cnt % status_cnt) == (status_cnt-1))
-		f.send_status = 1;	
+		f.send_status = 1;
 	
 	if((cnt % rcdata_cnt) == (rcdata_cnt-1))
-		f.send_rcdata = 1;	
+		f.send_rcdata = 1;
 	
 	if((cnt % motopwm_cnt) == (motopwm_cnt-2))
-		f.send_motopwm = 1;	
+		f.send_motopwm = 1;
 	
 	if((cnt % power_cnt) == (power_cnt-2))
-		f.send_power = 1;		
+		f.send_power = 1;
 	
 	if((cnt % speed_cnt) == (speed_cnt-3))
-		f.send_speed = 1;		
+		f.send_speed = 1;
 	
 	if((cnt % location_cnt) == (location_cnt-3))
 	{
-		f.send_location += 1;		
+		f.send_location += 1;
 	}
 	
 	if(++cnt>200) cnt = 0;
+
+//========================================================================================================
+//发送内容判断
+	
 /////////////////////////////////////////////////////////////////////////////////////
 	if(f.msg_id)			//
 	{
 		ANO_DT_Send_Msg(f.msg_id,f.msg_data);
 		f.msg_id = 0;
 	}
+	
 /////////////////////////////////////////////////////////////////////////////////////
 	if(f.send_check)
 	{
@@ -147,7 +155,8 @@ void ANO_DT_Data_Exchange(void)
 	else if(f.send_status)
 	{
 		f.send_status = 0;
-		ANO_DT_Send_Status(Roll,Pitch,Yaw,(0.1f *baro_fusion.fusion_displacement.out),0,fly_ready);	
+		ANO_DT_Send_Status(	Roll,	Pitch,	Yaw,	(0.1f *baro_fusion.fusion_displacement.out),	0,			fly_ready);	
+		//					Roll	Pitch	Yaw		高度											飞行模式		解锁状态
 	}	
 /////////////////////////////////////////////////////////////////////////////////////
 	else if(f.send_speed)
@@ -246,15 +255,16 @@ void ANO_DT_Data_Exchange(void)
 	{
 		
 		f.send_location = 0;
-		ANO_DT_Send_Location(0,0,0 *10000000,0  *10000000,0);
+		ANO_DT_Send_Location(	0,			0,			0*10000000,		0 *10000000,	0		);
+		//						定位状态	卫星数量	精度 			纬度 			回航角
 		
 	}
-/////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////
-	Usb_Hid_Send();		
-/////////////////////////////////////////////////////////////////////////////////////
+
+#ifdef ANO_DT_USE_USB_HID
+	Usb_Hid_Send();	
+#endif
+	
+
 }
 
 
@@ -568,23 +578,23 @@ void ANO_DT_Send_Location(u8 state,u8 sat_num,s32 lon,s32 lat,float back_home_an
 	data_to_send[_cnt++]=0x04;
 	data_to_send[_cnt++]=0;
 	
-	data_to_send[_cnt++]=state;
-	data_to_send[_cnt++]=sat_num;
+	data_to_send[_cnt++]=state;		//当前位置信息
+	data_to_send[_cnt++]=sat_num;	//卫星数量
 	
-	_temp2 = lon;//经度
+	_temp2 = lon;					//经度，类型是s32，单位是*10000000
 	data_to_send[_cnt++]=BYTE3(_temp2);
 	data_to_send[_cnt++]=BYTE2(_temp2);	
 	data_to_send[_cnt++]=BYTE1(_temp2);
 	data_to_send[_cnt++]=BYTE0(_temp2);
 	
-	_temp2 = lat;//纬度
+	_temp2 = lat;					//纬度，类型是s32，单位是*10000000
 	data_to_send[_cnt++]=BYTE3(_temp2);
 	data_to_send[_cnt++]=BYTE2(_temp2);	
 	data_to_send[_cnt++]=BYTE1(_temp2);
 	data_to_send[_cnt++]=BYTE0(_temp2);
 	
 	
-	_temp = (s16)(100 *back_home_angle);
+	_temp = (s16)(100 *back_home_angle);//回航角（±180），单位是（度）*10
 	data_to_send[_cnt++]=BYTE1(_temp);
 	data_to_send[_cnt++]=BYTE0(_temp);
 	

@@ -19,3 +19,13 @@ ctrl2中z轴期望角度的处理有疑问！
 
 height_ctrl.c
 1.注释掉半成品代码
+2.添加注释
+
+data_transfer.c
+1.Usb_Hid_Send();增加宏定义控制，不需要USB数据发送时不编译本函数
+2.添加注释
+
+
+定高控制修改：
+1.删除fly_mode中关于GPS的赋值
+2.

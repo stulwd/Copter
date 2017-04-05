@@ -23,3 +23,5 @@ JLinkLog.txt
 *.htm
 *.map
 *.uvguix.*
+*.ANO
+*.hex

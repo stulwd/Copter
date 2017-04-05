@@ -209,9 +209,12 @@ void CTRL_1(float T)  //x roll,y pitch,z yaw
 	Thr_Ctrl(T);// 油门控制，这里面包含高度控制闭环
 				// 输出 thr_value
 	
+	//电机输出（包含解锁判断，未解锁状态输出为0）
 	All_Out(ctrl_1.out.x,ctrl_1.out.y,ctrl_1.out.z);	//输出值包括两部分，posture_value 和 thr_value
 														//out_roll,out_pitch,out_yaw 生成 posture_value
 														//在 All_Out 里这两部分按照权重参数 Thr_Weight 整合
+														
+	//记录历史数据
 	ctrl_1.err_old.x = ctrl_1.err.x;
 	ctrl_1.err_old.y = ctrl_1.err.y;
 	ctrl_1.err_old.z = ctrl_1.err.z;
@@ -242,8 +245,8 @@ void Thr_Ctrl(float T)
 		Thr_Low = 0;
 	}
 	
-/////////////////////////////////////////////////////////////////
-	
+	//根据飞行模式选择油门控制方法
+	//mode_value[BARO]： 0 -- 手动    1 -- 定高
 	if(mode_value[BARO])	//定高模式（在此版本代码里，mode_value[BARO]由fly_mode.c控制）
 	{
 		if(NS==0) //丢失信号
@@ -262,10 +265,8 @@ void Thr_Ctrl(float T)
 		}
 		thr_value = Height_Ctrl(T,thr,fly_ready,0);   //实际使用值
 	}
-////////////////////////////////////////////////////////////////
 	
-	thr_value = LIMIT(thr_value,0,10 *MAX_THR *MAX_PWM/100);	//油门值限幅
-																//thr_value直接被用于计算电机输出（是最终的油门输出值）
+	thr_value = LIMIT(thr_value,0,10 *MAX_THR *MAX_PWM/100);	//油门值限幅		//thr_value直接被用于计算电机输出（是最终的油门输出值）
 	
 	//计算权重参数 Thr_Weight，油门越高，权重越大（表示姿态输出在总输出中占比增大）
 	Thr_tmp += 10 *3.14f *T *(thr_value/400.0f - Thr_tmp); 			//thr_value 的低通滤波值为 Thr_tmp
