@@ -29,3 +29,9 @@ data_transfer.c
 定高控制修改：
 1.删除fly_mode中关于GPS的赋值
 2.
+
+模式切换表示方式修改：
+在ctrl.c里把mode_value[BARO]替换为mode_state
+删除mode_value相关代码
+
+在数据回传中增加飞行模式回传

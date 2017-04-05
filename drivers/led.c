@@ -275,26 +275,7 @@ void LED_Duty() //50ms一次
 	
 	led_cnt_res_check();
 	
-//	if(Mag_CALIBRATED)
-//	{
-//		LED_status[1] = 1;
-//	}
-//	else if(mode_value[BACK_HOME]==1)
-//	{
-//		LED_status[1] = 4; //返航
-//	}
-//	else if(height_ctrl_mode==1)
-//	{
-//		LED_status[1] = 2;
-//	}
-//	else if(height_ctrl_mode==2)
-//	{
-//		LED_status[1] = 3;
-//	}
-//	else if(height_ctrl_mode==0)
-//	{
-//		LED_status[1] = 0;
-//	}
+
 	if(Mag_CALIBRATED) //传感器校准指示优先
 	{
 		light.RGB_Info = 19;
@@ -572,4 +553,3 @@ void LED_MS5611_Err(void)
 }
 
 /******************* (C) COPYRIGHT 2016 ANO TECH *****END OF FILE************/
-
