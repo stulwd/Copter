@@ -22,11 +22,11 @@ void mode_check(float *ch_in,u8 *mode_value)
 	//=========== GPS、气压定高 ===========
 	if(mode_state == 0 )
 	{
-		*(mode_value+GPS) = *(mode_value+BARO) = 0;
+		*(mode_value+BARO) = 0;
 	}
 	else
 	{
-		*(mode_value+GPS) = *(mode_value+BARO) = 1;
+		*(mode_value+BARO) = 1;
 	}
 	
 //	//=========== 返航模式 ===========
