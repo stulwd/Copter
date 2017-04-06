@@ -488,6 +488,16 @@
               <FilePath>.\applications\init.h</FilePath>
             </File>
             <File>
+              <FileName>fly_ctrl.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\applications\fly_ctrl.c</FilePath>
+            </File>
+            <File>
+              <FileName>fly_ctrl.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\applications\fly_ctrl.h</FilePath>
+            </File>
+            <File>
               <FileName>parameter.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\applications\parameter.c</FilePath>

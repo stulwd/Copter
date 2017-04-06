@@ -389,7 +389,8 @@ void ANO_DT_Data_Receive_Anl(u8 *data_buf,u8 num)
 
 	if(*(data_buf+2)==0X03)		//RCDATA（命令字03）
 	{
-		if( NS != 1 )	//表示接收到数传来的遥控数据了，要对飞行控制信号看门狗进行喂狗
+		//如果NS模式不是1（不是接收机模式或接收机已经掉线），则用数传数据喂狗，喂狗时会把模式切换为数传数据模式
+		if( NS != 1 )
 		{
 			Feed_Rc_Dog(2);	//数传
 		}

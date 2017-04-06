@@ -35,3 +35,7 @@ data_transfer.c
 删除mode_value相关代码
 
 在数据回传中增加飞行模式回传
+
+增加飞行控制文件fly_ctrl.c和fly_ctrl.h
+
+ctrl.c用CH_ctrl替换CH_filter

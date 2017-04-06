@@ -10,6 +10,7 @@
 #include "ctrl.h"
 #include "height_ctrl.h"
 #include "fly_mode.h"
+#include "fly_ctrl.h"
 
 ctrl_t ctrl_1;
 ctrl_t ctrl_2;
@@ -19,7 +20,7 @@ void Ctrl_Para_Init()		//设置默认参数
 //====================================
 	ctrl_1.PID[PIDROLL].kdamp  = 1;
 	ctrl_1.PID[PIDPITCH].kdamp = 1;
-	ctrl_1.PID[PIDYAW].kdamp 	 = 1;
+	ctrl_1.PID[PIDYAW].kdamp   = 1;
 	
 	ctrl_1.FB = 0.20;   //外  0<fb<1
 }
@@ -32,10 +33,7 @@ xyz_f_t ctrl_angle_offset = {0,0,0};
 
 void CTRL_2(float T)
 {
-// 	static xyz_f_t acc_no_g;
-// 	static xyz_f_t acc_no_g_lpf;
-	
-	
+
 //=========================== 期望角度 ========================================
 	
 	//=================== filter ===================================
@@ -47,23 +45,29 @@ void CTRL_2(float T)
 	//并把输入的 -500 -- +500 这个区间的遥控器数值归一化，然后乘上最大期望值，使输入值成为当前期望值对最大期望值的占比
 	
 	//x轴、y轴处理
-	except_A.x  = MAX_CTRL_ANGLE  *( my_deathzoom( ( CH_filter[ROL]) ,0,30 )/500.0f );   //30
-	except_A.y  = MAX_CTRL_ANGLE  *( my_deathzoom( (-CH_filter[PIT]) ,0,30 )/500.0f );   //30
+//	except_A.x  = MAX_CTRL_ANGLE  *( my_deathzoom( ( CH_filter[ROL]) ,0,30 )/500.0f );
+//	except_A.y  = MAX_CTRL_ANGLE  *( my_deathzoom( (-CH_filter[PIT]) ,0,30 )/500.0f );
+	
+	except_A.x  = MAX_CTRL_ANGLE  *( my_deathzoom( ( CH_ctrl[ROL]) ,0,30 )/500.0f );
+	except_A.y  = MAX_CTRL_ANGLE  *( my_deathzoom( (-CH_ctrl[PIT]) ,0,30 )/500.0f );
 	
 	//z轴处理，将输入值转化为期望角速度
 	if( Thr_Low == 0 )	//这东西顶多跟起不起飞有关系，跟油门低不低有啥关系？？
 	{
 		//油门非低
 		//设置死区，进行归一化处理，最大角度值由最大角速度值 MAX_CTRL_YAW_SPEED 对 时间的积分 来影响
-		except_A.z += (s16)( MAX_CTRL_YAW_SPEED *( my_deathzoom_2( (CH_filter[YAW]) ,0,40 )/500.0f ) ) *T ;  //50
+//		except_A.z += (s16)( MAX_CTRL_YAW_SPEED *( my_deathzoom_2( (CH_filter[YAW]) ,0,40 )/500.0f ) ) *T ;
+		
+		except_A.z += (s16)( MAX_CTRL_YAW_SPEED *( my_deathzoom_2( (CH_ctrl[YAW]) ,0,40 )/500.0f ) ) *T ;
 	}
-	else
+	else	//油门低
 	{
-		//油门低
 		except_A.z += 1 *3.14 *T *( Yaw - except_A.z );	//油门低状态下的z轴期望角速度与所处角度有关
 														//这个地方真的有点不清楚，前面那些参数和T有关，看起来像是低通滤波器
 	}
 	except_A.z = To_180_degrees(except_A.z);			//将 except_A.z 的数值限制在 -180 -- +180 之间
+	
+//===================================================================
 
 	/* 得到角度误差 */
 	//将误差角度限制在±180°之间
@@ -136,8 +140,8 @@ void CTRL_1(float T)  //x roll,y pitch,z yaw
 	
 	/* 给期望（目标）角速度 */
 	// 从含义上分析是期望角速度对最大角速度的占比，ctrl_2.out.x / ANGLE_TO_MAX_AS 是对 ctrl_2.out.x 的归一化
-	EXP_LPF_TMP.x = MAX_CTRL_ASPEED *(ctrl_2.out.x/ANGLE_TO_MAX_AS);//*( (CH_filter[0])/500.0f );//
-	EXP_LPF_TMP.y = MAX_CTRL_ASPEED *(ctrl_2.out.y/ANGLE_TO_MAX_AS);//*( (CH_filter[1])/500.0f );//
+	EXP_LPF_TMP.x = MAX_CTRL_ASPEED *(ctrl_2.out.x/ANGLE_TO_MAX_AS);//
+	EXP_LPF_TMP.y = MAX_CTRL_ASPEED *(ctrl_2.out.y/ANGLE_TO_MAX_AS);//
 	EXP_LPF_TMP.z = MAX_CTRL_YAW_SPEED *(ctrl_2.out.z/ANGLE_TO_MAX_AS);
 	
 	except_AS.x = EXP_LPF_TMP.x;//20 *3.14 *T *( EXP_LPF_TMP.x - except_AS.x );//
@@ -234,7 +238,8 @@ void Thr_Ctrl(float T)
 	static float thr;
 	static float Thr_tmp;
 	
-	thr = 500 + CH_filter[THR]; //油门值 0 ~ 1000
+//	thr = 500 + CH_filter[THR]; //油门值 0 ~ 1000
+	thr = 500 + CH_ctrl[THR];	//油门值 0 ~ 1000
 	
 	if( thr < 100 )	//油门低判断
 	{
@@ -257,11 +262,11 @@ void Thr_Ctrl(float T)
 		
 		thr_value = Height_Ctrl(T,thr,fly_ready,1);   //输出经过定高算法修正的值
 	}
-	else					//手动模式
+	else					//手动模式（只有mode_state = 0时才是手动，其余的都是自动控高）
 	{
 		if(NS==0) //丢失信号
 		{
-			thr = LIMIT(thr,0,350);	//非定高模式丢信号，油门350，基本上就是悬停或者慢速下降
+			thr = LIMIT(thr,0,300);	//非定高模式丢信号，油门300，基本上就是悬停或者慢速下降
 		}
 		thr_value = Height_Ctrl(T,thr,fly_ready,0);   //实际使用值
 	}
@@ -367,6 +372,9 @@ void All_Out(float out_roll,float out_pitch,float out_yaw)
 
 //一段不知道有什么用的矫正
 //原位置在 得到角度误差 前头
+
+// 	static xyz_f_t acc_no_g;
+// 	static xyz_f_t acc_no_g_lpf;
 
 //xyz_f_t compensation;
 

@@ -54,6 +54,8 @@ void RC_Duty( float T , u16 tmp16_CH[CH_NUM] )
 
 	//按照 NS 的数值选择数据源
 	//把 tmp16_CH 或 RX_CH 中所有通道的数值放进 Mapped_CH 数组
+	
+	//初始值为0；接收机输入数据时被切换为1；接收机没有数据，数传输入数据时被切换为2
 	if( NS == 1 )
 	{
 		CH_Mapping_Fun(tmp16_CH,Mapped_CH);
@@ -145,10 +147,7 @@ void RC_Duty( float T , u16 tmp16_CH[CH_NUM] )
 		{
 			CH_filter[i] += 0.5f * filter_A *( CH[i] - CH_filter[i] ) ;	//如果变化量过大，就减小此数据对输出值的影响（滤波系数减小）
 		}
-
-//		CH_filter_D[i] 	= ( CH_filter[i] - CH_filter_Old[i] );
-//		CH_filter_Old[i] = CH_filter[i];
-//		CH_Old[i] 		= CH[i];
+		
 		
 		//如果输入信号的通道异常，就在数据输入端把油门值放到最低，保证安全.
 		//这里的通道异常判断是来自于一个对NS进行操作的看门狗的，在本文件下方
@@ -283,60 +282,7 @@ void Fly_Ready(float T,float height_speed_mm)
 //=================== filter ===================================
 //  全局输出，CH_filter[],0横滚，1俯仰，2油门，3航向 范围：+-500	
 //=================== filter =================================== 	
-//u8 height_ctrl_mode = 0;
 
-//extern u8 ultra_ok;
-//void Mode()
-//{
-////	if( !fly_ready || CH_filter[THR]<-400 ) //只在上锁时 以及 油门 低于10% 的时候，允许切换模式，否则只能向模式0切换。
-////	{
-//		if( CH_filter[AUX1] < -200 )
-//		{
-//			height_ctrl_mode = 0;
-//		}
-//		else if( CH_filter[AUX1] < 200 )
-//		{
-//			height_ctrl_mode = 1;
-//		}
-//		else
-//		{
-//			if(ultra_ok == 1)
-//			{
-//				height_ctrl_mode = 2;
-//			}
-//			else
-//			{
-//				height_ctrl_mode = 1;
-//			}
-//		}
-////	}
-////	else
-////	{
-////		if( CH_filter[AUX1] < -200 )
-////		{
-////			height_ctrl_mode = 0;
-////		}
-////	}
-//}
-
-//#if(USE_TOE_IN_UNLOCK)		
-//		if( CH_filter[3] < -400 )							
-//		{
-//			if( CH_filter[1] > 400 )
-//			{
-//				if( CH_filter[0] > 400 )
-//				{
-//					if( ready_cnt != -1 )				   //外八满足且退出解锁上锁过程
-//					{
-//						ready_cnt += 3 *1000 *T;
-//					}
-//				}
-
-//			}
-
-//		}
-//#else
-//#endif		
 
 /******************* (C) COPYRIGHT 2014 ANO TECH *****END OF FILE************/
 

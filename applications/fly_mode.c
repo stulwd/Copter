@@ -1,23 +1,75 @@
 #include "fly_mode.h"
 #include "rc.h"
 
-u8 mode_state,mode_state_old;
+u8 mode_state;
+u8 ctrl_command;
 void mode_check(float *ch_in)
 {
+	/*
+	
+	mode_state：
+	0：手动
+	1：气压计
+	2：超声波+气压计
+	3：自动
+	
+	AUX1（CH5）：
+	低：0
+	中：2
+	高：3
+	
+	*/
+	
 	//根据AUX1通道（第5通道）的数值切换飞行模式
 	if(*(ch_in+AUX1) <-200)			//最低
 	{
 		mode_state = 0;	//手动油门
 	}
-	else if(*(ch_in+AUX1) >200)		//中间
+	else if(*(ch_in+AUX1) >200)		//最高
 	{
 		mode_state = 2;	//超声波+气压计融合
 	}
-	else							//最高
+	else							//中间
 	{
-		mode_state = 1;	//气压计定高
+		mode_state = 3;	//自动控制模式，有fly_ctrl.c中代码影响摇杆值
 	}
 	
-	//===========   ===========
-	mode_state_old = mode_state; //历史模式
+	//根据AUX2通道（第6通道）的数值输入自动控制指令
+	if(*(ch_in+AUX2) <-200)			//最低
+	{
+		ctrl_command = 0;
+	}
+	else if(*(ch_in+AUX2) >200)		//最高
+	{
+		ctrl_command = 1;
+	}
+	else							//中间
+	{
+		ctrl_command = 2;
+	}	
+	
 }
+
+
+
+//旧的模式判断代码，0 -- 手动，1 -- 气压计， 2 -- 超声波
+//u8 mode_state_old;
+//void mode_check(float *ch_in)
+//{
+//	//根据AUX1通道（第5通道）的数值切换飞行模式
+//	if(*(ch_in+AUX1) <-200)			//最低
+//	{
+//		mode_state = 0;	//手动油门
+//	}
+//	else if(*(ch_in+AUX1) >200)		//中间
+//	{
+//		mode_state = 2;	//超声波+气压计融合
+//	}
+//	else							//最高
+//	{
+//		mode_state = 1;	//气压计定高
+//	}
+//	
+//	//===========   ===========
+//	mode_state_old = mode_state; //历史模式
+//}
