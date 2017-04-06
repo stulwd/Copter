@@ -498,6 +498,16 @@
               <FilePath>.\applications\fly_ctrl.h</FilePath>
             </File>
             <File>
+              <FileName>fly_mode.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\applications\fly_mode.c</FilePath>
+            </File>
+            <File>
+              <FileName>fly_mode.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\applications\fly_mode.h</FilePath>
+            </File>
+            <File>
               <FileName>parameter.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\applications\parameter.c</FilePath>
@@ -591,16 +601,6 @@
               <FileName>height_ctrl.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\applications\height_ctrl.h</FilePath>
-            </File>
-            <File>
-              <FileName>fly_mode.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\applications\fly_mode.c</FilePath>
-            </File>
-            <File>
-              <FileName>fly_mode.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\applications\fly_mode.h</FilePath>
             </File>
             <File>
               <FileName>anotc_baro_ctrl.c</FileName>

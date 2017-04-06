@@ -21,17 +21,29 @@ void mode_check(float *ch_in)
 	*/
 	
 	//根据AUX1通道（第5通道）的数值切换飞行模式
-	if(*(ch_in+AUX1) <-200)			//最低
+	if(*(ch_in+AUX1) <-350)				//-499 -- -350
 	{
 		mode_state = 0;	//手动油门
 	}
-	else if(*(ch_in+AUX1) >200)		//最高
+	else if(*(ch_in+AUX1) < -150)		//-350 -- -150
 	{
 		mode_state = 2;	//超声波+气压计融合
 	}
-	else							//中间
+	else if(*(ch_in+AUX1) < 0)			//-150 -- 0
 	{
 		mode_state = 3;	//自动控制模式，有fly_ctrl.c中代码影响摇杆值
+	}
+	else if(*(ch_in+AUX1) < 150)		//0 -- 150
+	{
+		mode_state = 4;
+	}
+	else if(*(ch_in+AUX1) < 300)		//150 -- 300
+	{
+		mode_state = 5;
+	}
+	else								//300 -- 499
+	{
+		mode_state = 1;	//气压计定高
 	}
 	
 	//根据AUX2通道（第6通道）的数值输入自动控制指令
@@ -39,11 +51,11 @@ void mode_check(float *ch_in)
 	{
 		ctrl_command = 0;
 	}
-	else if(*(ch_in+AUX2) >200)		//最高
+	else if(*(ch_in+AUX2) <200)		//中间
 	{
 		ctrl_command = 1;
 	}
-	else							//中间
+	else							//最高
 	{
 		ctrl_command = 2;
 	}	

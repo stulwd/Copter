@@ -59,6 +59,11 @@ void USART2_IRQHandler(void)
 	Usart2_IRQ();
 }
 
+void UART4_IRQHandler(void)
+{
+	Uart4_IRQ();
+}
+
 void UART5_IRQHandler(void)
 {
 	Uart5_IRQ();

@@ -46,10 +46,10 @@ void CTRL_2(float T)
 	
 	//x轴、y轴处理
 //	except_A.x  = MAX_CTRL_ANGLE  *( my_deathzoom( ( CH_filter[ROL]) ,0,30 )/500.0f );
-//	except_A.y  = MAX_CTRL_ANGLE  *( my_deathzoom( (-CH_filter[PIT]) ,0,30 )/500.0f );
+//	except_A.y  = MAX_CTRL_ANGLE  *( my_deathzoom( ( CH_filter[PIT]) ,0,30 )/500.0f );
 	
 	except_A.x  = MAX_CTRL_ANGLE  *( my_deathzoom( ( CH_ctrl[ROL]) ,0,30 )/500.0f );
-	except_A.y  = MAX_CTRL_ANGLE  *( my_deathzoom( (-CH_ctrl[PIT]) ,0,30 )/500.0f );
+	except_A.y  = MAX_CTRL_ANGLE  *( my_deathzoom( ( CH_ctrl[PIT]) ,0,30 )/500.0f );
 	
 	//z轴处理，将输入值转化为期望角速度
 	if( Thr_Low == 0 )	//这东西顶多跟起不起飞有关系，跟油门低不低有啥关系？？
