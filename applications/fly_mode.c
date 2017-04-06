@@ -1,6 +1,8 @@
 #include "fly_mode.h"
 #include "rc.h"
 
+extern float set_height_e;
+
 u8 mode_state;
 u8 ctrl_command;
 void mode_check(float *ch_in)
@@ -58,7 +60,13 @@ void mode_check(float *ch_in)
 	else							//最高
 	{
 		ctrl_command = 2;
-	}	
+	}
+	
+	//自动回位开关
+	if(*(ch_in+AUX3) > 0)			//触发
+	{
+		set_height_e = 0;	//期望速度差归零
+	}
 	
 }
 

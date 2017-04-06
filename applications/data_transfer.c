@@ -189,7 +189,7 @@ void ANO_DT_Data_Exchange(void)
 	else if(f.send_rcdata)
 	{
 		f.send_rcdata = 0;
-		ANO_DT_Send_RCData(CH[2]+1500,CH[3]+1500,CH[0]+1500,CH[1]+1500,CH[4]+1500,CH[5]+1500,CH[6]+1500,CH[7]+1500,0 +1500,0 +1500);
+		ANO_DT_Send_RCData(CH[2]+1500,CH[3]+1500,CH[0]+1500,CH[1]+1500,CH[4]+1500,CH[5]+1500,CH[6]+1500,CH[7]+1500,-500 +1500,-500 +1500);
 	}	
 /////////////////////////////////////////////////////////////////////////////////////	
 	else if(f.send_motopwm)
@@ -901,9 +901,7 @@ void ANO_DT_Send_PID(u8 group,float p1_p,float p1_i,float p1_d,float p2_p,float 
 	ANO_DT_Send_Data(data_to_send, _cnt);
 }
 
-
-extern float yaw_mag;
-
+extern float set_speed,set_height_e;
 void ANO_DT_Send_User()
 {
 	u8 _cnt=0;
@@ -914,19 +912,19 @@ void ANO_DT_Send_User()
 	data_to_send[_cnt++]=0xf1; //用户数据
 	data_to_send[_cnt++]=0;
 	
-	_temp = (s16)baro_p.displacement;            		//1	
+	_temp = (s16)set_speed;            					//1	
 	data_to_send[_cnt++]=BYTE1(_temp);
 	data_to_send[_cnt++]=BYTE0(_temp);
 
-	_temp = (s16)wz_speed;								//2
+	_temp = (s16)set_height_e;							//2
 	data_to_send[_cnt++]=BYTE1(_temp);
 	data_to_send[_cnt++]=BYTE0(_temp);
 	
-	_temp = (s16)baro_p.speed;							//3
+	_temp = (s16)hc_value.m_speed;						//3
 	data_to_send[_cnt++]=BYTE1(_temp);
 	data_to_send[_cnt++]=BYTE0(_temp);	
 	
-	_temp = (s16)baro_fusion.fusion_acceleration.out;	//4
+	_temp = (s16)hc_value.fusion_speed;					//4
 	data_to_send[_cnt++]=BYTE1(_temp);
 	data_to_send[_cnt++]=BYTE0(_temp);
 	
