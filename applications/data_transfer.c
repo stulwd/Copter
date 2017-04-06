@@ -134,14 +134,14 @@ void ANO_DT_Data_Exchange(void)
 //发送内容判断
 	
 /////////////////////////////////////////////////////////////////////////////////////
-	if(f.msg_id)			//
+	if(f.msg_id)			//指令反馈信息
 	{
 		ANO_DT_Send_Msg(f.msg_id,f.msg_data);
 		f.msg_id = 0;
 	}
 	
 /////////////////////////////////////////////////////////////////////////////////////
-	if(f.send_check)
+	if(f.send_check)	//
 	{
 		f.send_check = 0;
 		ANO_DT_Send_Check(checkdata_to_send,checksum_to_send);
@@ -509,6 +509,10 @@ void ANO_DT_Data_Receive_Anl(u8 *data_buf,u8 num)
 	}
 }
 
+//=====================================================================================
+//数据发送函数
+
+//VER
 void ANO_DT_Send_Version(u8 hardware_type, u16 hardware_ver,u16 software_ver,u16 protocol_ver,u16 bootloader_ver)
 {
 	u8 _cnt=0;
@@ -537,6 +541,7 @@ void ANO_DT_Send_Version(u8 hardware_type, u16 hardware_ver,u16 software_ver,u16
 	ANO_DT_Send_Data(data_to_send, _cnt);
 }
 
+//
 void ANO_DT_Send_Speed(float x_s,float y_s,float z_s)
 {
 	u8 _cnt=0;
@@ -569,6 +574,7 @@ void ANO_DT_Send_Speed(float x_s,float y_s,float z_s)
 
 }
 
+//GPSDATA
 void ANO_DT_Send_Location(u8 state,u8 sat_num,s32 lon,s32 lat,float back_home_angle)
 {
 	u8 _cnt=0;
@@ -612,7 +618,7 @@ void ANO_DT_Send_Location(u8 state,u8 sat_num,s32 lon,s32 lat,float back_home_an
 
 }
 
-
+//STATUS
 void ANO_DT_Send_Status(float angle_rol, float angle_pit, float angle_yaw, s32 alt, u8 fly_model, u8 armed)
 {
 	u8 _cnt=0;
@@ -652,6 +658,8 @@ void ANO_DT_Send_Status(float angle_rol, float angle_pit, float angle_yaw, s32 a
 	
 	ANO_DT_Send_Data(data_to_send, _cnt);
 }
+
+//SENSER
 void ANO_DT_Send_Senser(s16 a_x,s16 a_y,s16 a_z,s16 g_x,s16 g_y,s16 g_z,s16 m_x,s16 m_y,s16 m_z)
 {
 	u8 _cnt=0;
@@ -705,6 +713,8 @@ void ANO_DT_Send_Senser(s16 a_x,s16 a_y,s16 a_z,s16 g_x,s16 g_y,s16 g_z,s16 m_x,
 	
 	ANO_DT_Send_Data(data_to_send, _cnt);
 }
+
+//SENSER2
 void ANO_DT_Send_Senser2(s32 bar_alt,u16 csb_alt)
 {
 	u8 _cnt=0;
@@ -731,6 +741,8 @@ void ANO_DT_Send_Senser2(s32 bar_alt,u16 csb_alt)
 	
 	ANO_DT_Send_Data(data_to_send, _cnt);
 }
+
+//RCDATA
 void ANO_DT_Send_RCData(u16 thr,u16 yaw,u16 rol,u16 pit,u16 aux1,u16 aux2,u16 aux3,u16 aux4,u16 aux5,u16 aux6)
 {
 	u8 _cnt=0;
@@ -770,6 +782,8 @@ void ANO_DT_Send_RCData(u16 thr,u16 yaw,u16 rol,u16 pit,u16 aux1,u16 aux2,u16 au
 	
 	ANO_DT_Send_Data(data_to_send, _cnt);
 }
+
+//POWER
 void ANO_DT_Send_Power(u16 votage, u16 current)
 {
 	u8 _cnt=0;
@@ -797,6 +811,8 @@ void ANO_DT_Send_Power(u16 votage, u16 current)
 	
 	ANO_DT_Send_Data(data_to_send, _cnt);
 }
+
+//MOTO
 void ANO_DT_Send_MotoPWM(u16 m_1,u16 m_2,u16 m_3,u16 m_4,u16 m_5,u16 m_6,u16 m_7,u16 m_8)
 {
 	u8 _cnt=0;
@@ -833,6 +849,8 @@ void ANO_DT_Send_MotoPWM(u16 m_1,u16 m_2,u16 m_3,u16 m_4,u16 m_5,u16 m_6,u16 m_7
 	
 	ANO_DT_Send_Data(data_to_send, _cnt);
 }
+
+//PID
 void ANO_DT_Send_PID(u8 group,float p1_p,float p1_i,float p1_d,float p2_p,float p2_i,float p2_d,float p3_p,float p3_i,float p3_d)
 {
 	u8 _cnt=0;
@@ -884,8 +902,7 @@ void ANO_DT_Send_PID(u8 group,float p1_p,float p1_i,float p1_d,float p2_p,float 
 }
 
 
-extern float yaw_mag,airframe_x_sp,airframe_y_sp,wx_sp,wy_sp;
-extern float werr_x_gps,werr_y_gps,aerr_x_gps,aerr_y_gps;
+extern float yaw_mag;
 
 void ANO_DT_Send_User()
 {
@@ -897,37 +914,36 @@ void ANO_DT_Send_User()
 	data_to_send[_cnt++]=0xf1; //用户数据
 	data_to_send[_cnt++]=0;
 	
-	
-	_temp = (s16)baro_p.displacement;            //1
+	_temp = (s16)baro_p.displacement;            		//1	
 	data_to_send[_cnt++]=BYTE1(_temp);
 	data_to_send[_cnt++]=BYTE0(_temp);
 
-	_temp = (s16)wz_speed;
+	_temp = (s16)wz_speed;								//2
 	data_to_send[_cnt++]=BYTE1(_temp);
 	data_to_send[_cnt++]=BYTE0(_temp);
 	
-	_temp = (s16)baro_p.speed;
+	_temp = (s16)baro_p.speed;							//3
 	data_to_send[_cnt++]=BYTE1(_temp);
 	data_to_send[_cnt++]=BYTE0(_temp);	
 	
-	_temp = (s16)baro_fusion.fusion_acceleration.out;
+	_temp = (s16)baro_fusion.fusion_acceleration.out;	//4
 	data_to_send[_cnt++]=BYTE1(_temp);
 	data_to_send[_cnt++]=BYTE0(_temp);
 	
-  _temp = (s16)baro_fusion.fusion_displacement.out;              //5
+  _temp = (s16)baro_fusion.fusion_displacement.out;		//5
 	data_to_send[_cnt++]=BYTE1(_temp);
 	data_to_send[_cnt++]=BYTE0(_temp);
 	
-	_temp = (s16)(ultra.height *10);              //6
+	_temp = (s16)(ultra.height *10);              		//6
 	data_to_send[_cnt++]=BYTE1(_temp);
 	data_to_send[_cnt++]=BYTE0(_temp);
 
-	_temp = (s16)(10000 * reference_v.z);              //7
+	_temp = (s16)(10000 * reference_v.z);              	//7
 	data_to_send[_cnt++]=BYTE1(_temp);
 	data_to_send[_cnt++]=BYTE0(_temp);
 
 	
-	data_to_send[3] = _cnt-4;
+	data_to_send[3] = _cnt-4;							//LEN位，在这里补上
 	
 	u8 sum = 0;
 	for(u8 i=0;i<_cnt;i++)
