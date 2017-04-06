@@ -25,3 +25,4 @@ JLinkLog.txt
 *.uvguix.*
 *.ANO
 *.hex
+*.scvd
