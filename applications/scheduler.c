@@ -114,7 +114,7 @@ void Duty_20ms()
 void Duty_50ms()
 {
 	//Mode();	
-	mode_check(CH_filter,mode_value);
+	mode_check(CH_filter);
 	LED_Duty();								//LED任务
 	Ultra_Duty();
 }

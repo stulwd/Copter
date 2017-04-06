@@ -246,8 +246,8 @@ void Thr_Ctrl(float T)
 	}
 	
 	//根据飞行模式选择油门控制方法
-	//mode_value[BARO]： 0 -- 手动    1 -- 定高
-	if(mode_value[BARO])	//定高模式（在此版本代码里，mode_value[BARO]由fly_mode.c控制）
+	//mode_state： 0 -- 姿态    1 -- 气压计   2 -- 超声波 + 气压计
+	if(mode_state)	//定高模式（在此版本代码里，mode_state由fly_mode.c控制）
 	{
 		if(NS==0) //丢失信号
 		{

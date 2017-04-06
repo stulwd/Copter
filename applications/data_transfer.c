@@ -19,6 +19,7 @@
 #include "usbd_user_hid.h"
 #include "ultrasonic.h"
 #include "anotc_baro_ctrl.h"
+#include "fly_mode.h"
 
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -155,8 +156,8 @@ void ANO_DT_Data_Exchange(void)
 	else if(f.send_status)
 	{
 		f.send_status = 0;
-		ANO_DT_Send_Status(	Roll,	Pitch,	Yaw,	(0.1f *baro_fusion.fusion_displacement.out),	0,			fly_ready);	
-		//					Roll	Pitch	Yaw		高度											飞行模式		解锁状态
+		ANO_DT_Send_Status(	Roll,	Pitch,	Yaw,	(0.1f *baro_fusion.fusion_displacement.out),	mode_state+1,	fly_ready);	
+		//					Roll	Pitch	Yaw		高度											飞行模式			解锁状态
 	}	
 /////////////////////////////////////////////////////////////////////////////////////
 	else if(f.send_speed)
