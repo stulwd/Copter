@@ -134,7 +134,7 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 		//近地状态判断
 		if(ultra.measure_ok == 1)	//超声波数据有效
 		{
-			if(ultra.height < 30)	//单位是cm，30cm以下算近地
+			if(ultra.height < 50)	//单位是cm，30cm以下算近地
 			{
 				near_land_flag = 1;	//近地
 			}
