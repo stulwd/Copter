@@ -241,7 +241,8 @@ void Thr_Ctrl(float T)
 //	thr = 500 + CH_filter[THR]; //油门值 0 ~ 1000
 	thr = 500 + CH_ctrl[THR];	//油门值 0 ~ 1000
 	
-	if( thr < 100 )	//油门低判断
+	//thr取值范围0-1000
+	if( thr < 100 )	//油门低判断（用于 ALL_Out里的最低转速保护 和 ctrl2里的Yaw轴起飞前处理）
 	{
 		Thr_Low = 1;
 	}
@@ -335,6 +336,7 @@ void All_Out(float out_roll,float out_pitch,float out_yaw)
 	/* 是否解锁 */
 	if(fly_ready)
 	{
+		//保证基准转速，防止算法输出总输出过低导致的在空中停转
 		if( !Thr_Low )  			//油门拉起
 		{
 			for(i=0;i<MAXMOTORS;i++)
@@ -347,18 +349,19 @@ void All_Out(float out_roll,float out_pitch,float out_yaw)
 		{
 			for(i=0;i<MAXMOTORS;i++)
 			{
-				motor[i] = LIMIT(motor[i], 0,(10*MAX_PWM) );
+				motor[i] = LIMIT(motor[i], 0,(10*MAX_PWM) );	//不限制最高油门，允许最低油门归0
 			}
 		}
 	}
-	else
+	else	//未解锁状态下所有电机输出值强制为0
 	{
 		for(i=0;i<MAXMOTORS;i++)
 		{
 			motor[i] = 0;
 		}
 	}
-	/* xxx */
+	
+	/* 赋值给输出变量 */
 	for(i=0;i<MAXMOTORS;i++)
 	{
 		motor_out[i] = (s16)(motor[i]);

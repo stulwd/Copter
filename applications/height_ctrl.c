@@ -112,7 +112,7 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 	else
 	{
 		//检测模式切换
-		/*飞行中初次进入定高模式切换处理*/
+		//飞行中初次进入定高模式切换处理（安全保护，防止基准油门过低）
 		if( ABS(en - en_old) > 0.5f )	//从非定高切换到定高（官方注释）	//我认为是模式在飞行中被切换，切换方向不确定
 		{
 			
@@ -127,6 +127,8 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 			}
 			en_old = en;	//更新历史模式
 		}
+		
+		//======================================================================================
 		
 		//升降判断，生成速度期望
 		if(thr_set>0)	//上升
@@ -152,6 +154,7 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 																							//my_pow_2_curve把输入数据转换为2阶的曲线，在0附近平缓，在数值较大的部分卸率大
 		set_speed = LIMIT(set_speed,-MAX_VERTICAL_SPEED_DW,MAX_VERTICAL_SPEED_UP);	//限幅，单位mm/s
 		
+		//======================================================================================
 		
 		//计算高度误差（可加滤波）
 		//高度差 = ∑速度差*T （单位 mm/s）
