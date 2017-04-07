@@ -258,6 +258,26 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 		/////////////////////////////////////////////////////////////////////////////////
 		
 		//油门补偿、油门输出
+		/*
+								   1
+				tilted_fix = -------------
+							 reference_v.z
+												  1
+				tilted_fix * thr_take_off = ------------- * thr_take_off
+											reference_v.z
+		
+				reference_v.z 是 地理坐标系 向 机体坐标系 转换时z轴数值乘的系数，z（机体） = reference_v.z * Z（地理）
+		
+				1 / reference_v.z 是 机体坐标系 向 地理坐标系 转换时z轴数值乘的系数，z（地理） = 1 / reference_v.z * z（机体）
+		
+				thr_take_off 是 本应该施加在飞机于地理坐标系Z轴上受到的力，但是由于飞机会倾斜，油门的输出值实际上是输出在机体坐标系的z轴上的
+				thr_take_off 乘上了 1 / reference_v.z 这个系数，就算出了机体坐标系应该输出的值，也就是说：
+		
+				如果要在地理坐标系的Z轴输出 thr_take_off ，则应该在机体坐标系的z轴输出 1 / reference_v.z * thr_take_off 这个值
+		
+				（飞机越斜，地理坐标系Z轴在机体z轴上映射的分量越小，其cos值reference_v.z越小， 1 / reference_v.z 也就越大）
+				
+		*/
 		tilted_fix = safe_div(1,LIMIT(reference_v.z,0.707f,1),0); //45度内补偿
 		thr_out = (thr_pid_out + tilted_fix *(thr_take_off) );	//由两部分组成：油门PID + 油门补偿 * 起飞油门
 		thr_out = LIMIT(thr_out,0,1000);
