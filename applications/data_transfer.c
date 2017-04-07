@@ -157,13 +157,13 @@ void ANO_DT_Data_Exchange(void)
 	{
 		f.send_status = 0;
 		ANO_DT_Send_Status(	Roll,	Pitch,	Yaw,	(0.1f *baro_fusion.fusion_displacement.out),	mode_state+1,	fly_ready);	
-		//					Roll	Pitch	Yaw		高度											飞行模式			解锁状态
+		//					Roll	Pitch	Yaw		高度（气压计融合后的高度）						飞行模式		解锁状态
 	}	
 /////////////////////////////////////////////////////////////////////////////////////
 	else if(f.send_speed)
 	{
 		f.send_speed = 0;
-		ANO_DT_Send_Speed(0,0,wz_speed);
+		ANO_DT_Send_Speed(0,0,wz_speed);	//wz_speed 是气压计数据得出的相对准确的垂直速度
 	}
 /////////////////////////////////////////////////////////////////////////////////////
 	else if(f.send_user)
@@ -541,7 +541,7 @@ void ANO_DT_Send_Version(u8 hardware_type, u16 hardware_ver,u16 software_ver,u16
 	ANO_DT_Send_Data(data_to_send, _cnt);
 }
 
-//
+//飞行速度
 void ANO_DT_Send_Speed(float x_s,float y_s,float z_s)
 {
 	u8 _cnt=0;
@@ -618,7 +618,7 @@ void ANO_DT_Send_Location(u8 state,u8 sat_num,s32 lon,s32 lat,float back_home_an
 
 }
 
-//STATUS
+//STATUS（三轴姿态、气压计高度（cm）、飞行模式、解锁状态）
 void ANO_DT_Send_Status(float angle_rol, float angle_pit, float angle_yaw, s32 alt, u8 fly_model, u8 armed)
 {
 	u8 _cnt=0;
@@ -715,6 +715,7 @@ void ANO_DT_Send_Senser(s16 a_x,s16 a_y,s16 a_z,s16 g_x,s16 g_y,s16 g_z,s16 m_x,
 }
 
 //SENSER2
+//气压计高度、超声波高度
 void ANO_DT_Send_Senser2(s32 bar_alt,u16 csb_alt)
 {
 	u8 _cnt=0;
@@ -928,7 +929,7 @@ void ANO_DT_Send_User()
 	data_to_send[_cnt++]=BYTE1(_temp);
 	data_to_send[_cnt++]=BYTE0(_temp);
 	
-  _temp = (s16)baro_fusion.fusion_displacement.out;		//5
+	_temp = (s16)baro_fusion.fusion_displacement.out;	//5
 	data_to_send[_cnt++]=BYTE1(_temp);
 	data_to_send[_cnt++]=BYTE0(_temp);
 	

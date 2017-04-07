@@ -123,7 +123,7 @@ _f_set_st baro_f_set = {
 //													0.5f
 
 float sonar_weight;
-float wz_speed,baro_com_val;
+float wz_speed,baro_com_val;	//wz_speed 是气压计数据得出的相对准确的垂直速度
 void baro_ctrl(float dT,_hc_value_st *height_value)		//获取高度数据（调用周期2ms）
 {
 	static float dtime;
@@ -178,13 +178,21 @@ void baro_ctrl(float dT,_hc_value_st *height_value)		//获取高度数据（调用周期2ms
 	//		   融合了加速度计数据经过带通滤波		被带通滤掉的气压计速度量经过带通滤波
 	
 	//气压计、超声波原始数据融合
+	//速度融合
 	float m_speed,f_speed;
 	m_speed = (1 - sonar_weight) *baro_p.speed + sonar_weight *(sonar.speed);															//数据源：经过平均数滤波、单位转换为mm的速度值
 	f_speed = (1 - sonar_weight) *(wz_speed)   + sonar_weight *(sonar_fusion.fusion_speed_m.out - sonar_fusion.fusion_speed_me.out);	//数据源：融合了加速度计的数据
 	
+	//加速度采用经过等效重力向量矫正的加速度计数据
+	//速度采用超声波+气压计融合的速度数据
+	//高度采用气压计+加速度计融合的气压计高度
 	height_value->m_acc = acc_3d_hg.z;
 	height_value->m_speed = m_speed;  //(1 - sonar_weight) *hf1.ref_speed_lpf + sonar_weight *(sonar.speed);	//m_speed
 	height_value->m_height = baro_p.displacement;
+	
+	//加速度采纳融合了气压计数据、加速度计数据的加速度
+	//速度数据采纳设置死区、限幅后的超声波+气压计融合的速度数据
+	//高度数据采纳融合后的气压计数据
 	height_value->fusion_acc = baro_fusion.fusion_acceleration.out;
 	height_value->fusion_speed = my_deathzoom(LIMIT( (f_speed),-MAX_VERTICAL_SPEED_DW,MAX_VERTICAL_SPEED_UP),height_value->fusion_speed,10);	//f_speed限幅+死区（如果变化小，就认为没变化）
 	height_value->fusion_height = baro_fusion.fusion_displacement.out; 

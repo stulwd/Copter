@@ -70,7 +70,7 @@ float thr_set,thr_pid_out,thr_out,thr_take_off,tilted_fix;
 
 float en_old;
 u8 ex_i_en;
-
+u8 near_land_flag = 0;	//近地标志位，近地 -- 1，非近地 -- 2，失效 -- 0
 float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 {
 	/*
@@ -130,6 +130,24 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 		
 		//======================================================================================
 		
+		
+		//近地状态判断
+		if(ultra.measure_ok == 1)	//超声波数据有效
+		{
+			if(ultra.height < 30)	//单位是cm，30cm以下算近地
+			{
+				near_land_flag = 1;	//近地
+			}
+			else
+			{
+				near_land_flag = 2;	//正常飞行
+			}
+		}
+		else	//超声波数据无效，无法判断飞行高度，默认使用近地面模式限制下降速度
+		{
+			near_land_flag = 0;	//失效
+		}
+			
 		//升降判断，生成速度期望
 		if(thr_set>0)	//上升
 		{
@@ -144,15 +162,36 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 					thr_take_off = 350; //直接赋值起飞基准油门
 				}
 			}
+			
+			//速度期望限幅滤波
+			set_speed_t = LIMIT(set_speed_t,-MAX_VERTICAL_SPEED_DW,MAX_VERTICAL_SPEED_UP);	//速度期望限幅
+			LPF_1_(10.0f,T,my_pow_2_curve(set_speed_t,0.25f,MAX_VERTICAL_SPEED_DW),set_speed);	//LPF_1_是低通滤波器，截至频率是10Hz，输出值是set_speed，my_pow_2_curve把输入数据转换为2阶的曲线，在0附近平缓，在数值较大的部分卸率大
+			set_speed = LIMIT(set_speed,-MAX_VERTICAL_SPEED_DW,MAX_VERTICAL_SPEED_UP);	//限幅，单位mm/s
 		}
 		else			//悬停或下降
 		{
-			set_speed_t = thr_set/450 * MAX_VERTICAL_SPEED_DW;	//set_speed_t 表示期望上升速度占最大下降速度的比值
+			if(near_land_flag == 0 || near_land_flag == 2)	//无法判断/正常飞行
+			{
+				set_speed_t = thr_set/450 * MAX_VERTICAL_SPEED_DW;
+				
+				//速度期望限幅滤波
+				set_speed_t = LIMIT(set_speed_t,-MAX_VERTICAL_SPEED_DW,MAX_VERTICAL_SPEED_UP);	//速度期望限幅
+				LPF_1_(10.0f,T,my_pow_2_curve(set_speed_t,0.25f,MAX_VERTICAL_SPEED_DW),set_speed);	//LPF_1_是低通滤波器，截至频率是10Hz，输出值是set_speed，my_pow_2_curve把输入数据转换为2阶的曲线，在0附近平缓，在数值较大的部分卸率大
+				set_speed = LIMIT(set_speed,-MAX_VERTICAL_SPEED_DW,MAX_VERTICAL_SPEED_UP);	//限幅，单位mm/s
+				
+			}
+			else	//近地
+			{
+				set_speed_t = thr_set/450 * MAX_VERTICAL_SPEED_LAND;	//set_speed_t 表示期望上升速度占最大下降速度的比值
+				
+				//速度期望限幅滤波
+				set_speed_t = LIMIT(set_speed_t,-MAX_VERTICAL_SPEED_DW,MAX_VERTICAL_SPEED_UP);	//速度期望限幅
+				LPF_1_(10.0f,T,my_pow_2_curve(set_speed_t,0.25f,MAX_VERTICAL_SPEED_DW),set_speed);	//LPF_1_是低通滤波器，截至频率是10Hz，输出值是set_speed，my_pow_2_curve把输入数据转换为2阶的曲线，在0附近平缓，在数值较大的部分卸率大
+				set_speed = LIMIT(set_speed,-MAX_VERTICAL_SPEED_LAND,MAX_VERTICAL_SPEED_UP);	//限幅，单位mm/s
+			}
 		}
-		set_speed_t = LIMIT(set_speed_t,-MAX_VERTICAL_SPEED_DW,MAX_VERTICAL_SPEED_UP);	//速度期望限幅
-		LPF_1_(10.0f,T,my_pow_2_curve(set_speed_t,0.25f,MAX_VERTICAL_SPEED_DW),set_speed);	//LPF_1_是低通滤波器，截至频率是10Hz，输出值是set_speed
-																							//my_pow_2_curve把输入数据转换为2阶的曲线，在0附近平缓，在数值较大的部分卸率大
-		set_speed = LIMIT(set_speed,-MAX_VERTICAL_SPEED_DW,MAX_VERTICAL_SPEED_UP);	//限幅，单位mm/s
+		
+		//set_speed为最终输出的期望速度
 		
 		//======================================================================================
 		

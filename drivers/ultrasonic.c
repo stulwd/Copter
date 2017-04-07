@@ -88,7 +88,7 @@ void Ultra_Get(u8 com_data)
 	}
 	else if( ultra_start_f == 2 )	//返回了第二个数值（低八位）
 	{
-		ultra.height =  ((ultra_tmp<<8) + com_data)/10;		//传入数据单位是mm，÷10后单位是cm
+		ultra.height =  ((ultra_tmp<<8) + com_data)/10;		//单位是cm（传入数据单位是mm，÷10后单位是cm）
 		
 		if(ultra.height < 500) // 5米范围内认为有效，跳变值约10米.
 		{
