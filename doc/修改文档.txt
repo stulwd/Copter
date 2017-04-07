@@ -39,3 +39,12 @@ data_transfer.c
 增加飞行控制文件fly_ctrl.c和fly_ctrl.h
 
 ctrl.c用CH_ctrl替换CH_filter
+
+增加串口4驱动，还没有改完
+
+fly_mode.c,fly_ctrl_ctrl,c：
+1.通道五改为6种飞行模式切换
+
+2.通道六用于传入测试指令
+
+3.在通道七增加定高积分变量清零功能

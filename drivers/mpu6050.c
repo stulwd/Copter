@@ -267,7 +267,7 @@ void MPU6050_Data_Offset()
 
 #endif
 
-    if(mpu6050.Gyro_CALIBRATE)	//mpu6050.Gyro_CALIBRATE 可能的取值是 0，1，2      0：正常状态，不需要校准    1：上位机发送了校准指令	2：解锁的一瞬间，认为此事角速度为0
+    if(mpu6050.Gyro_CALIBRATE)	//mpu6050.Gyro_CALIBRATE 可能的取值是 0，1，2      0：正常状态，不需要校准    1：上位机发送了校准指令	2：解锁的一瞬间，认为此时角速度为0
     {
 		//累加，取平均
         gyro_sum_cnt++;
