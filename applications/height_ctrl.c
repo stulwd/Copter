@@ -277,6 +277,12 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 		
 				（飞机越斜，地理坐标系Z轴在机体z轴上映射的分量越小，其cos值reference_v.z越小， 1 / reference_v.z 也就越大）
 				
+				==========================================================================================================
+				
+				这个公式的原型是：z(机体) = reference_v.x * x(地理) + reference_v.y * y(地理) + reference_v.z * z(地理)
+				
+				这里只有一个 z(地理) 的力对应于 z(机体) 的力，所以只有 reference_v.z 一个系数出现，然后把这个公式反向使用，就是上面的那个公式
+				
 		*/
 		tilted_fix = safe_div(1,LIMIT(reference_v.z,0.707f,1),0); //45度内补偿
 		thr_out = (thr_pid_out + tilted_fix *(thr_take_off) );	//由两部分组成：油门PID + 油门补偿 * 起飞油门
