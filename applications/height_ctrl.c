@@ -259,6 +259,13 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 		
 		//油门补偿、油门输出
 		/*
+				这个公式的原型是：
+				z(机体) = x.z * R(地理) + y.z * R(地理) + reference_v.z * R(地理)
+		
+				在这里的R的值在地理坐标系Z轴上，R = [0,0,thr_take_off](转置)
+		
+				所以：z(机体) = x.z * 0 + y.z * 0 + reference_v.z * thr_take_off = reference_v.z * thr_take_off
+
 								   1
 				tilted_fix = -------------
 							 reference_v.z
@@ -266,7 +273,7 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 				tilted_fix * thr_take_off = ------------- * thr_take_off
 											reference_v.z
 		
-				reference_v.z 是 地理坐标系 向 机体坐标系 转换时z轴数值乘的系数，z（机体） = reference_v.z * Z（地理）
+				reference_v.z 是 地理坐标系 向 机体坐标系 转换时z轴数值乘的系数，z(机体)(地理Z轴分量) = reference_v.z * Z(地理)
 		
 				1 / reference_v.z 是 机体坐标系 向 地理坐标系 转换时z轴数值乘的系数，z（地理） = 1 / reference_v.z * z（机体）
 		
@@ -278,10 +285,12 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 				（飞机越斜，地理坐标系Z轴在机体z轴上映射的分量越小，其cos值reference_v.z越小， 1 / reference_v.z 也就越大）
 				
 				==========================================================================================================
+
+				x(机体)(地理Z轴分量) = reference_v.x * Z(地理)
+				y(机体)(地理Z轴分量) = reference_v.y * Z(地理)
+				z(机体)(地理Z轴分量) = reference_v.z * Z(地理)
 				
-				这个公式的原型是：z(机体) = reference_v.x * x(地理) + reference_v.y * y(地理) + reference_v.z * z(地理)
-				
-				这里只有一个 z(地理) 的力对应于 z(机体) 的力，所以只有 reference_v.z 一个系数出现，然后把这个公式反向使用，就是上面的那个公式
+				这里只有一个 Z(地理) 的力对应于 z(机体) 的力，只有地理Z轴上有数值，所以只有 reference_v.z 一个系数出现，然后把这个公式反向使用，就是上面的那个公式
 				
 		*/
 		tilted_fix = safe_div(1,LIMIT(reference_v.z,0.707f,1),0); //45度内补偿

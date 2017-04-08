@@ -47,7 +47,7 @@
 #define FIX_GYRO_Y 			1.02f				//陀螺仪Y轴固有补偿
 #define FIX_GYRO_X 			1.02f				//陀螺仪X轴固有补偿
 
-#define TO_M_S2 			0.23926f   			//  980cm/s2    +-8g   980/4096
+#define TO_M_S2 			0.23926f   			//  980cm/s2    +-8g	980/4096
 #define ANGLE_TO_RADIAN 	0.01745329f 		//  *0.01745 = /57.3	角度转弧度
 
 #define MAX_ACC  4096.0f						//  +-8G		加速度计量程
