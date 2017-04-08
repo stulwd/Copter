@@ -62,6 +62,10 @@ void fly_ctrl(void)	//调用周期2ms
 			CH_ctrl[3] = 0;	//3：航向
 			CH_ctrl[2] = 0;	//2：油门（油门位于中值，含义为高度保持）
 		}
+		else if(ctrl_command == 3)
+		{
+			
+		}
 	}
 }
 

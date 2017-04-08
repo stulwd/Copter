@@ -940,6 +940,10 @@ void ANO_DT_Send_User()
 	_temp = (s16)(10000 * reference_v.z);              	//7
 	data_to_send[_cnt++]=BYTE1(_temp);
 	data_to_send[_cnt++]=BYTE0(_temp);
+	
+	_temp = (s16)(10000 * acc_3d_hg.z);              	//8
+	data_to_send[_cnt++]=BYTE1(_temp);
+	data_to_send[_cnt++]=BYTE0(_temp);
 
 	
 	data_to_send[3] = _cnt-4;							//LEN位，在这里补上

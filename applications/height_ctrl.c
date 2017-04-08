@@ -70,7 +70,6 @@ float thr_set,thr_pid_out,thr_out,thr_take_off,tilted_fix;
 
 float en_old;
 u8 ex_i_en;
-u8 near_land_flag = 0;	//近地标志位，近地 -- 1，非近地 -- 2，失效 -- 0
 float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 {
 	/*
@@ -129,28 +128,6 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 		}
 		
 		//======================================================================================
-		
-		
-		//近地状态判断
-		if(ultra.measure_ok == 1)	//超声波数据有效
-		{
-			if(ultra.height < 10)	//单位是cm，30cm以下算近地
-			{
-				near_land_flag = 1;	//地面
-			}
-			else if(ultra.height < 50)	//单位是cm，30cm以下算近地
-			{
-				near_land_flag = 2;	//近地
-			}
-			else
-			{
-				near_land_flag = 3;	//正常飞行
-			}
-		}
-		else	//超声波数据无效，无法判断飞行高度，默认使用近地面模式限制下降速度
-		{
-			near_land_flag = 0;	//失效
-		}
 			
 		//升降判断，生成速度期望
 		if(thr_set>0)	//上升
@@ -169,14 +146,7 @@ float Height_Ctrl(float T,float thr,u8 ready,float en)	//en	1：定高   0：非定高
 		}
 		else			//悬停或下降
 		{
-			if(near_land_flag != 2)
-			{
 				set_speed_t = thr_set/450 * MAX_VERTICAL_SPEED_DW;
-			}
-			else	//近地
-			{
-				set_speed_t = thr_set/450 * MAX_VERTICAL_SPEED_LAND;	//set_speed_t 表示期望上升速度占最大下降速度的比值
-			}
 		}
 		
 		//速度期望限幅滤波
