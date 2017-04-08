@@ -343,7 +343,7 @@ double To_180_degrees_db(double x)
 	return (x>180?(x-360):(x<-180?(x+360):x));
 }
 
-float To_180_degrees(float x)
+float To_180_degrees(float x)	//能够自动加减360°
 {
 	return (x>180?(x-360):(x<-180?(x+360):x));
 }
